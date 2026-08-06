@@ -310,21 +310,25 @@ Recap Editor: Matt Crawford">
     <p class="tag" style="margin-bottom:14px;">Contact</p>
     <h2 class="reveal in" style="font-size:clamp(28px,3.6vw,44px); margin-bottom:40px;">Get In Touch</h2>
     <div class="contact-grid reveal in">
-      <form onsubmit="event.preventDefault(); this.querySelector('.sent').style.display='block';">
-        <div class="field"><label for="name">Name</label><input id="name" type="text" required></div>
-        <div class="field"><label for="email">Email</label><input id="email" type="email" required></div>
+      <form id="contactForm">
+        <input type="hidden" name="access_key" value="bc2603b9-24d6-4e02-b24f-167406747748">
+        <input type="hidden" name="subject" value="New inquiry from matt-crawford.com">
+        <input type="checkbox" name="botcheck" style="display:none;">
+        <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" required></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
         <div class="field">
           <label for="type">Project type</label>
-          <select id="type">
+          <select id="type" name="project_type">
             <option>Broadcast</option>
             <option>Commercial</option>
             <option>Events</option>
             <option>Other</option>
           </select>
         </div>
-        <div class="field"><label for="msg">Project details</label><textarea id="msg" rows="4" required></textarea></div>
+        <div class="field"><label for="msg">Project details</label><textarea id="msg" name="message" rows="4" required></textarea></div>
         <button type="submit" class="textlink" style="background:none; border:none; border-bottom:1px solid var(--line-strong); cursor:pointer; font:inherit; color:inherit;">[ Send inquiry ]</button>
         <p class="sent" style="display:none; margin-top:16px; font-family:var(--mono); font-size:12px; color:var(--grey);">Thanks — message noted. I'll follow up within one business day.</p>
+        <p class="error" style="display:none; margin-top:16px; font-family:var(--mono); font-size:12px; color:var(--grey);">Something went wrong — please email contact@matt-crawford.com directly.</p>
       </form>
       <div class="contact-direct">
         <p style="font-family:var(--mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--grey); margin-bottom:22px;">Direct Contact</p>
@@ -382,6 +386,37 @@ Recap Editor: Matt Crawford">
     entries.forEach(e => { floatCta.classList.toggle('hide', e.isIntersecting); });
   }, {threshold:0.15});
   ctaIo.observe(contactSection);
+
+  const contactForm = document.getElementById('contactForm');
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const sentMsg = contactForm.querySelector('.sent');
+    const errorMsg = contactForm.querySelector('.error');
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    sentMsg.style.display = 'none';
+    errorMsg.style.display = 'none';
+    submitBtn.style.opacity = '0.5';
+
+    try {
+      const formData = new FormData(contactForm);
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: formData
+      });
+      const result = await res.json();
+      if (result.success) {
+        sentMsg.style.display = 'block';
+        contactForm.reset();
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    } catch (err) {
+      errorMsg.style.display = 'block';
+    } finally {
+      submitBtn.style.opacity = '1';
+    }
+  });
 
   const modal = document.getElementById('videoModal');
   const modalVideo = document.getElementById('modalVideo');
