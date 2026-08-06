@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matt Crawford — Brand Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0a0a; --ink-2:#141414; --paper:#f4f3ef; --grey:#8c8c86; --grey-dim:#57564f;
+    --line:rgba(244,243,239,0.14); --line-strong:rgba(244,243,239,0.28);
+    --display:'Inter',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+    --max:1180px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--paper); font-family:var(--body); line-height:1.6;}
+  .wrap{max-width:var(--max); margin:0 auto; padding:0 40px;}
+  h1,h2,h3{font-family:var(--display); font-weight:800; text-transform:uppercase;}
+  .tag{font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
+  section{padding:90px 0; border-bottom:1px solid var(--line);}
+  header.hero{padding:140px 0 90px; border-bottom:1px solid var(--line);}
+  header.hero h1{font-size:clamp(40px,7vw,80px); margin-top:16px;}
+  header.hero p{color:var(--grey); margin-top:22px; max-width:52ch; font-size:15px; font-family:var(--mono); line-height:1.8;}
+
+  .swatches{display:grid; grid-template-columns:repeat(4,1fr); gap:2px; margin-top:50px; background:var(--line);}
+  .swatch{background:var(--ink); padding:24px 20px; min-height:180px; display:flex; flex-direction:column; justify-content:space-between;}
+  .swatch .fill{height:80px; border:1px solid var(--line-strong); margin-bottom:18px;}
+  .swatch h4{font-family:var(--display); font-size:15px; text-transform:uppercase;}
+  .swatch p{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:6px;}
+  .swatch small{display:block; font-size:11px; color:var(--grey); margin-top:8px; line-height:1.5; font-family:var(--body); text-transform:none; letter-spacing:0;}
+
+  .type-row{padding:36px 0; border-top:1px solid var(--line); display:grid; grid-template-columns:170px 1fr; gap:30px; align-items:baseline;}
+  .type-row:last-child{border-bottom:none;}
+  .type-label{font-family:var(--mono); font-size:11px; color:var(--grey); letter-spacing:0.08em; text-transform:uppercase;}
+  .type-sample-display{font-family:var(--display); font-size:40px; text-transform:uppercase; font-weight:800;}
+  .type-sample-body{font-family:var(--body); font-size:18px; color:var(--grey);}
+  .type-sample-mono{font-family:var(--mono); font-size:14px; color:var(--paper); letter-spacing:0.06em; text-transform:uppercase;}
+  .type-meta{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:10px;}
+
+  .voice-grid{display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-top:40px; background:var(--line);}
+  .voice-col{background:var(--ink); padding:34px;}
+  .voice-col h4{font-family:var(--mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:18px; color:var(--grey);}
+  .voice-col p{font-size:14.5px; color:var(--grey); padding:10px 0; border-bottom:1px solid var(--line);}
+  .voice-col p:last-child{border-bottom:none;}
+
+  .app-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin-top:40px; background:var(--line);}
+  .app-item{background:var(--ink); padding:28px;}
+  .app-item .tag{margin-bottom:16px; display:block;}
+  .btn-demo{font-family:var(--mono); font-size:12px; letter-spacing:0.1em; text-transform:uppercase; border-bottom:1px solid var(--line-strong); padding-bottom:4px; display:inline-block;}
+
+  footer{padding:50px 0; text-align:center;}
+  footer p{font-family:var(--mono); font-size:11px; color:var(--grey); letter-spacing:0.06em;}
+
+  @media (max-width:860px){
+    .swatches{grid-template-columns:repeat(2,1fr);}
+    .type-row{grid-template-columns:1fr; gap:10px;}
+    .voice-grid, .app-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="tag">Brand Guide</p>
+    <h1>Matt Crawford</h1>
+    <p>A quick reference for the palette, type, and voice behind the Matt Crawford site — monochrome, image-led, and restrained. Type system: Inter throughout, for a clean, neutral, generic-by-design feel across headings and body.</p>
+  </div>
+</header>
+
+<section id="palette">
+  <div class="wrap">
+    <p class="tag">01 — Color</p>
+    <h2 style="margin-top:14px; font-size:clamp(24px,3.2vw,32px);">Near-black, off-white, nothing else</h2>
+    <div class="swatches">
+      <div class="swatch">
+        <div><div class="fill" style="background:#0a0a0a;"></div><h4>Ink</h4></div>
+        <p>#0A0A0A<small>Primary background. Used everywhere — there is no secondary background.</small></p>
+      </div>
+      <div class="swatch">
+        <div><div class="fill" style="background:#f4f3ef;"></div><h4>Paper</h4></div>
+        <p>#F4F3EF<small>Primary text and hero headlines.</small></p>
+      </div>
+      <div class="swatch">
+        <div><div class="fill" style="background:#8c8c86;"></div><h4>Grey</h4></div>
+        <p>#8C8C86<small>Secondary text, captions, tags, body copy.</small></p>
+      </div>
+      <div class="swatch">
+        <div><div class="fill" style="background:#141414; border-color:rgba(244,243,239,0.28);"></div><h4>Ink 2</h4></div>
+        <p>#141414<small>Card and tile backgrounds only — never large fields.</small></p>
+      </div>
+    </div>
+    <p style="margin-top:24px; font-family:var(--mono); font-size:12px; color:var(--grey); max-width:60ch; line-height:1.8;">NO ACCENT COLOR. Contrast and hierarchy come from scale, weight, and tracking — not hue. If a project ever needs a splash of color, treat it as a rare exception, not a system.</p>
+  </div>
+</section>
+
+<section id="type">
+  <div class="wrap">
+    <p class="tag">02 — Typography</p>
+    <h2 style="margin-top:14px; font-size:clamp(24px,3.2vw,32px);">One family, worked hard</h2>
+    <div class="type-row">
+      <div class="type-label">Display<br>Inter, 700–800</div>
+      <div><p class="type-sample-display">Selected Work</p><p class="type-meta">Section headings &amp; tile titles only · Always uppercase · Tight leading</p></div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Body<br>Inter, 400–500</div>
+      <div><p class="type-sample-body">Matt Crawford creates cinematic aerial footage for broadcast, commercial, and event coverage.</p><p class="type-meta">Paragraph text · Sentence case</p></div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Mono<br>IBM Plex Mono</div>
+      <div><p class="type-sample-mono">Broadcast — Vancouver, Canada</p><p class="type-meta">Tags, nav, captions, buttons · Uppercase, letter-spaced</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="voice">
+  <div class="wrap">
+    <p class="tag">03 — Voice</p>
+    <h2 style="margin-top:14px; font-size:clamp(24px,3.2vw,32px);">Plainspoken, never breathless</h2>
+    <div class="voice-grid">
+      <div class="voice-col">
+        <h4 style="color:var(--paper);">Do</h4>
+        <p>"Every project starts with a flight plan."</p>
+        <p>Short, declarative lines. Let the image carry the mood.</p>
+        <p>Name the client, category, and location — specifics build trust.</p>
+      </div>
+      <div class="voice-col">
+        <h4>Avoid</h4>
+        <p>"Elevate your vision to soaring new heights!"</p>
+        <p>Long paragraphs of scene-setting copy.</p>
+        <p>Stacked adjectives — "breathtaking, stunning, unforgettable."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="components">
+  <div class="wrap">
+    <p class="tag">04 — Components</p>
+    <h2 style="margin-top:14px; font-size:clamp(24px,3.2vw,32px);">Text links, with one exception</h2>
+    <p style="max-width:60ch; color:var(--grey); margin-top:16px; font-size:14px; font-family:var(--mono); line-height:1.8;">Actions are bracketed, tracked-out text links with a hairline underline — quiet, in keeping with the reference sites' restraint. The one deliberate exception is the persistent "Get in touch" button that follows the visitor down the page: it's solid-filled so it reads as the one standing invitation to make contact, and it auto-hides once the visitor reaches the Contact section itself.</p>
+    <div class="app-grid">
+      <div class="app-item"><p class="tag">Standard action</p><span class="btn-demo">[ Work ]</span></div>
+      <div class="app-item"><p class="tag">Persistent CTA (exception)</p><span style="background:var(--paper); color:var(--ink); font-family:var(--mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:10px 16px; display:inline-block;">Get in touch</span></div>
+      <div class="app-item"><p class="tag">Tile tag</p><p style="font-family:var(--mono); font-size:10px; letter-spacing:0.14em; color:var(--grey); text-transform:uppercase; margin-top:16px;">Broadcast — Vancouver, Canada</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="video" style="border-bottom:none;">
+  <div class="wrap">
+    <p class="tag">05 — Video &amp; Imagery</p>
+    <h2 style="margin-top:14px; font-size:clamp(24px,3.2vw,32px);">Full color, full video, on request</h2>
+    <p style="max-width:60ch; color:var(--grey); margin-top:16px; font-size:14px; font-family:var(--mono); line-height:1.8;">Every tile plays a short, muted, looping preview at all times — in natural color, never desaturated. Clicking any tile opens the complete, full-length clip with sound and playback controls, captioned below with Project, Client, and Credits. The hero uses the same pattern at full scale: a single muted, looping background video instead of a static image. Photography follows the same rule — natural color, no filters.</p>
+    <div class="app-grid">
+      <div class="app-item"><p class="tag">Grid</p><p style="font-family:var(--body); font-size:14px; color:var(--paper); margin-top:16px;">Uniform 4:3 tiles, six per page</p></div>
+      <div class="app-item"><p class="tag">Caption fields</p><p style="font-family:var(--body); font-size:14px; color:var(--paper); margin-top:16px;">Project · Client · Credits</p></div>
+      <div class="app-item"><p class="tag">Positioning</p><p style="font-family:var(--body); font-size:14px; color:var(--paper); margin-top:16px;">International — no home base named</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Matt Crawford · Brand Guide</p>
+</footer>
+
+</body>
+</html>
