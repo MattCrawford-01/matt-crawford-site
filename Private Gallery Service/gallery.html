@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Photo Gallery — Matt Crawford</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0a0a; --ink-2:#141414; --paper:#f4f3ef; --grey:#8c8c86;
+    --line:rgba(244,243,239,0.14); --line-strong:rgba(244,243,239,0.28);
+    --display:'Inter',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+    --max:1180px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--paper); font-family:var(--body); line-height:1.6;}
+  .wrap{max-width:var(--max); margin:0 auto; padding:60px 40px;}
+  h1,h2{font-family:var(--display); font-weight:800; text-transform:uppercase;}
+  .tag{font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
+  a{color:inherit;}
+  .back-link{font-family:var(--mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase; border-bottom:1px solid var(--line-strong); padding-bottom:2px; display:inline-block; margin-bottom:40px;}
+  header{margin-bottom:50px;}
+  header h1{font-size:clamp(28px,4vw,42px); margin-top:12px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; margin-bottom:60px;}
+  .photo{position:relative; aspect-ratio:4/5; background:var(--ink-2); overflow:hidden; cursor:pointer; border:2px solid transparent;}
+  .photo.selected{border-color:var(--paper);}
+  .photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  .photo .check{position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:50%; border:1.5px solid var(--paper); background:rgba(10,10,10,0.5); display:flex; align-items:center; justify-content:center; font-size:12px;}
+  .photo.selected .check{background:var(--paper); color:var(--ink);}
+  .play-badge{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:rgba(10,10,10,0.6); border:1.5px solid var(--paper); display:flex; align-items:center; justify-content:center; font-size:14px; pointer-events:none;}
+  .video-overlay{position:fixed; inset:0; z-index:300; background:rgba(10,10,10,0.96); display:none; align-items:center; justify-content:center; padding:40px;}
+  .video-overlay.active{display:flex;}
+  .video-overlay-content{max-width:900px; width:100%;}
+  .video-overlay video{width:100%; max-height:70vh; display:block; background:#000;}
+  .video-overlay-actions{display:flex; gap:20px; margin-top:20px; justify-content:center;}
+  .video-overlay .btn-outline{font-family:var(--mono); font-size:12px; letter-spacing:0.1em; text-transform:uppercase; background:none; color:var(--paper); border:1px solid var(--line-strong); padding:12px 20px; cursor:pointer;}
+  .panel{border-top:1px solid var(--line); padding-top:40px;}
+  .options{display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--line); margin-bottom:30px;}
+  .option{background:var(--ink); padding:24px;}
+  .option h3{font-size:16px; margin-bottom:6px;}
+  .option p{font-size:13px; color:var(--grey); margin-bottom:16px;}
+  select, input{width:100%; background:transparent; border:none; border-bottom:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:14px; padding:10px 2px; margin-bottom:12px;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .btn{font-family:var(--mono); font-size:12px; letter-spacing:0.1em; text-transform:uppercase; background:var(--paper); color:var(--ink); border:none; padding:14px 24px; cursor:pointer; margin-top:10px;}
+  .btn:hover{opacity:0.85;}
+  .status{font-family:var(--mono); font-size:12px; color:var(--grey); margin-top:16px;}
+  .hidden{display:none;}
+  #shipFields{margin-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="https://www.matt-crawford.com" class="back-link">[ ← Aerial cinematography by Matt Crawford ]</a>
+
+  <header id="galleryHeader">
+    <p class="tag">Private Gallery</p>
+    <h1 id="clientTitle">Loading...</h1>
+  </header>
+
+  <div id="galleryGrid" class="grid"></div>
+
+  <div class="panel">
+    <p class="tag" style="margin-bottom:20px;">Order Your Photos &amp; Videos</p>
+    <div class="options">
+      <div class="option">
+        <h3>Digital Download</h3>
+        <p>High-resolution files delivered by email immediately after purchase.</p>
+        <select id="digitalProduct">
+          <option value="digital_single">Single photo — $15</option>
+          <option value="digital_full_set">Full gallery — $99</option>
+        </select>
+        <input type="email" id="digitalEmail" placeholder="Your email" required>
+        <button class="btn" onclick="checkout('digital')">[ Purchase Digital ]</button>
+      </div>
+      <div class="option">
+        <h3>Physical Print</h3>
+        <p>Printed and shipped to you. Select photos above, then choose a size.</p>
+        <select id="printProduct">
+          <option value="print_8x10">8x10 — $35</option>
+          <option value="print_11x14">11x14 — $55</option>
+          <option value="print_16x20">16x20 — $85</option>
+        </select>
+        <input type="email" id="printEmail" placeholder="Your email" required>
+        <div id="shipFields">
+          <input type="text" id="shipName" placeholder="Full name" required>
+          <input type="text" id="shipLine1" placeholder="Address" required>
+          <div class="field-row">
+            <input type="text" id="shipCity" placeholder="City" required>
+            <input type="text" id="shipState" placeholder="State/Province" required>
+          </div>
+          <div class="field-row">
+            <input type="text" id="shipZip" placeholder="ZIP/Postal code" required>
+            <input type="text" id="shipCountry" placeholder="Country" required>
+          </div>
+        </div>
+        <button class="btn" onclick="checkout('print')">[ Purchase Print ]</button>
+      </div>
+    </div>
+    <p class="status" id="statusMsg"></p>
+  </div>
+</div>
+
+<div class="video-overlay" id="videoPreviewOverlay">
+  <div class="video-overlay-content">
+    <video id="videoPreviewPlayer" controls playsinline></video>
+    <div class="video-overlay-actions">
+      <button class="btn-outline" id="selectFromPreview">[ Select This Video ]</button>
+      <button class="btn-outline" onclick="closeVideoPreview()">[ Close ]</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('g');
+  let selectedPhotoIds = [];
+  let photosData = [];
+
+  async function loadGallery() {
+    if (!slug) {
+      document.getElementById('clientTitle').textContent = 'Gallery not found';
+      return;
+    }
+    const res = await fetch(`/api/gallery?slug=${slug}`);
+    if (!res.ok) {
+      document.getElementById('clientTitle').textContent = 'Gallery not found or expired';
+      return;
+    }
+    const data = await res.json();
+    photosData = data.media;
+    document.getElementById('clientTitle').textContent =
+      (data.clientBusiness || data.clientName) + ' — Photo Gallery';
+
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = data.media.map(m => `
+      <div class="photo" data-id="${m.id}" data-type="${m.type}" onclick="handleTileClick('${m.id}', '${m.type}')">
+        <img src="${m.thumb_url}" alt="${m.filename}">
+        ${m.type === 'video' ? '<div class="play-badge">▶</div>' : ''}
+        <div class="check">✓</div>
+      </div>
+    `).join('');
+  }
+
+  function handleTileClick(id, type) {
+    if (type === 'video') {
+      openVideoPreview(id);
+    } else {
+      toggleSelect(id);
+    }
+  }
+
+  function openVideoPreview(id) {
+    const media = photosData.find(m => m.id === id);
+    if (!media) return;
+    const overlay = document.getElementById('videoPreviewOverlay');
+    const video = document.getElementById('videoPreviewPlayer');
+    video.src = media.blob_url;
+    overlay.classList.add('active');
+    video.play().catch(() => {});
+    // Also allow selecting this video for purchase from within the preview
+    document.getElementById('selectFromPreview').onclick = () => { toggleSelect(id); closeVideoPreview(); };
+  }
+
+  function closeVideoPreview() {
+    const overlay = document.getElementById('videoPreviewOverlay');
+    const video = document.getElementById('videoPreviewPlayer');
+    video.pause();
+    video.removeAttribute('src');
+    overlay.classList.remove('active');
+  }
+
+  function toggleSelect(id) {
+    const el = document.querySelector(`.photo[data-id="${id}"]`);
+    const idx = selectedPhotoIds.indexOf(id);
+    if (idx > -1) {
+      selectedPhotoIds.splice(idx, 1);
+      el.classList.remove('selected');
+    } else {
+      selectedPhotoIds.push(id);
+      el.classList.add('selected');
+    }
+  }
+
+  async function checkout(kind) {
+    const statusEl = document.getElementById('statusMsg');
+    const product = kind === 'digital'
+      ? document.getElementById('digitalProduct').value
+      : document.getElementById('printProduct').value;
+    const email = kind === 'digital'
+      ? document.getElementById('digitalEmail').value
+      : document.getElementById('printEmail').value;
+
+    if (!email) { statusEl.textContent = 'Please enter your email.'; return; }
+
+    let shippingAddress = null;
+    if (kind === 'print') {
+      shippingAddress = {
+        name: document.getElementById('shipName').value,
+        line1: document.getElementById('shipLine1').value,
+        city: document.getElementById('shipCity').value,
+        state: document.getElementById('shipState').value,
+        postal_code: document.getElementById('shipZip').value,
+        country: document.getElementById('shipCountry').value,
+      };
+      if (!shippingAddress.name || !shippingAddress.line1 || !shippingAddress.city) {
+        statusEl.textContent = 'Please fill in your full shipping address.';
+        return;
+      }
+      if (selectedPhotoIds.length === 0) {
+        statusEl.textContent = 'Select at least one photo above for your print.';
+        return;
+      }
+      const selectedVideos = photosData.filter(m => selectedPhotoIds.includes(m.id) && m.type === 'video');
+      if (selectedVideos.length > 0) {
+        statusEl.textContent = 'Videos can\'t be printed — deselect video items to order prints, or choose Digital Download instead.';
+        return;
+      }
+    }
+
+    statusEl.textContent = 'Redirecting to checkout...';
+
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gallerySlug: slug,
+        product,
+        photoIds: selectedPhotoIds,
+        shippingAddress,
+        customerEmail: email,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.checkoutUrl) {
+      window.location.href = data.checkoutUrl;
+    } else {
+      statusEl.textContent = 'Something went wrong. Please try again.';
+    }
+  }
+
+  if (params.get('order') === 'success') {
+    document.getElementById('statusMsg').textContent = 'Thank you! Check your email for confirmation.';
+  }
+
+  loadGallery();
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery Admin — Matt Crawford</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0a0a; --ink-2:#141414; --paper:#f4f3ef; --grey:#8c8c86;
+    --line:rgba(244,243,239,0.14); --line-strong:rgba(244,243,239,0.28);
+    --display:'Inter',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--paper); font-family:var(--body); line-height:1.6;}
+  .wrap{max-width:640px; margin:0 auto; padding:80px 24px;}
+  h1{font-family:var(--display); font-weight:800; text-transform:uppercase; font-size:28px; margin-bottom:8px;}
+  .tag{font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
+  .field{margin:20px 0;}
+  label{display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin-bottom:8px;}
+  input, textarea{width:100%; background:transparent; border:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:14px; padding:12px;}
+  .btn{font-family:var(--mono); font-size:12px; letter-spacing:0.1em; text-transform:uppercase; background:var(--paper); color:var(--ink); border:none; padding:14px 24px; cursor:pointer; margin-top:10px;}
+  .btn:hover{opacity:0.85;}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+  #loginScreen, #adminScreen{display:none;}
+  #adminScreen.active, #loginScreen.active{display:block;}
+  .result{margin-top:24px; padding:20px; border:1px solid var(--line-strong); font-family:var(--mono); font-size:12px; word-break:break-all;}
+  .status{font-family:var(--mono); font-size:12px; color:var(--grey); margin-top:12px;}
+  .thumbrow{display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;}
+  .thumbrow img{width:70px; height:70px; object-fit:cover;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="loginScreen" class="active">
+    <p class="tag">Admin</p>
+    <h1>Gallery Dashboard</h1>
+    <div class="field">
+      <label>Admin Password</label>
+      <input type="password" id="passwordInput">
+    </div>
+    <button class="btn" onclick="login()">[ Enter ]</button>
+    <p class="status" id="loginStatus"></p>
+  </div>
+
+  <div id="adminScreen">
+    <p class="tag">Admin</p>
+    <h1>Create a New Gallery</h1>
+
+    <div class="field">
+      <label>Client Name</label>
+      <input type="text" id="clientName">
+    </div>
+    <div class="field">
+      <label>Business Name (optional)</label>
+      <input type="text" id="clientBusiness">
+    </div>
+    <div class="field">
+      <label>Client Email</label>
+      <input type="email" id="clientEmail">
+    </div>
+    <button class="btn" onclick="createGallery()">[ Create Gallery ]</button>
+    <p class="status" id="createStatus"></p>
+
+    <div id="uploadSection" style="display:none; margin-top:50px;">
+      <p class="tag">Upload Photos &amp; Videos</p>
+      <div class="field">
+        <input type="file" id="photoFiles" multiple accept="image/*,video/mp4,video/quicktime">
+      </div>
+      <button class="btn" onclick="uploadPhotos()">[ Upload Selected Files ]</button>
+      <p class="status" id="uploadStatus"></p>
+      <div class="thumbrow" id="thumbPreview"></div>
+    </div>
+
+    <div class="result" id="linkResult" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+  let adminPassword = '';
+  let currentGalleryId = null;
+
+  function login() {
+    adminPassword = document.getElementById('passwordInput').value;
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('adminScreen').classList.add('active');
+  }
+
+  async function createGallery() {
+    const statusEl = document.getElementById('createStatus');
+    const clientName = document.getElementById('clientName').value;
+    const clientBusiness = document.getElementById('clientBusiness').value;
+    const clientEmail = document.getElementById('clientEmail').value;
+
+    if (!clientName || !clientEmail) {
+      statusEl.textContent = 'Client name and email are required.';
+      return;
+    }
+
+    statusEl.textContent = 'Creating...';
+
+    const res = await fetch('/api/admin-create-gallery', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify({ clientName, clientBusiness, clientEmail }),
+    });
+
+    if (res.status === 401) {
+      statusEl.textContent = 'Wrong admin password.';
+      return;
+    }
+
+    const data = await res.json();
+    currentGalleryId = data.galleryId;
+    statusEl.textContent = 'Gallery created — now upload photos below.';
+    document.getElementById('uploadSection').style.display = 'block';
+
+    const linkEl = document.getElementById('linkResult');
+    linkEl.style.display = 'block';
+    linkEl.textContent = data.galleryUrl;
+  }
+
+  async function uploadPhotos() {
+    const { upload } = await import('https://esm.sh/@vercel/blob@0.27.0/client');
+    const statusEl = document.getElementById('uploadStatus');
+    const files = document.getElementById('photoFiles').files;
+    if (!currentGalleryId) { statusEl.textContent = 'Create a gallery first.'; return; }
+    if (files.length === 0) { statusEl.textContent = 'Choose files first.'; return; }
+
+    for (const file of files) {
+      const isVideo = file.type.startsWith('video/');
+      statusEl.textContent = `Uploading ${file.name} (${isVideo ? 'video' : 'photo'})...`;
+
+      // 1. Upload the full-resolution original directly to Blob (bypasses server size limits)
+      const fullResult = await upload(`galleries/${currentGalleryId}/full-${file.name}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/blob-upload-token',
+        clientPayload: JSON.stringify({}),
+        headers: { 'x-admin-password': adminPassword },
+      });
+
+      // 2. Generate a lightweight preview (thumbnail for photos, poster frame for video)
+      const thumbBlob = isVideo ? await makeVideoPoster(file) : await makeThumbnail(file);
+      const thumbResult = await upload(`galleries/${currentGalleryId}/thumb-${file.name}.jpg`, thumbBlob, {
+        access: 'public',
+        handleUploadUrl: '/api/blob-upload-token',
+        headers: { 'x-admin-password': adminPassword },
+      });
+
+      // 3. Register the media item in the database
+      await fetch('/api/admin-register-media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+        body: JSON.stringify({
+          galleryId: currentGalleryId,
+          type: isVideo ? 'video' : 'photo',
+          blobUrl: fullResult.url,
+          thumbUrl: thumbResult.url,
+          filename: file.name,
+          fileSizeBytes: file.size,
+        }),
+      });
+
+      const preview = document.createElement('img');
+      preview.src = URL.createObjectURL(thumbBlob);
+      document.getElementById('thumbPreview').appendChild(preview);
+    }
+
+    statusEl.textContent = `Done — ${files.length} file(s) uploaded.`;
+  }
+
+  function makeThumbnail(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 800;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, 'image/jpeg', 0.82);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  function makeVideoPoster(file) {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.src = URL.createObjectURL(file);
+      video.addEventListener('loadedmetadata', () => {
+        video.currentTime = Math.min(1, video.duration / 2);
+      });
+      video.addEventListener('seeked', () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 800;
+        const scale = Math.min(1, maxW / video.videoWidth);
+        canvas.width = video.videoWidth * scale;
+        canvas.height = video.videoHeight * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, 'image/jpeg', 0.82);
+        URL.revokeObjectURL(video.src);
+      });
+      video.addEventListener('error', reject);
+    });
+  }
+</script>
+</body>
+</html>
