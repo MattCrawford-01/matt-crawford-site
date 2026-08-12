@@ -139,8 +139,7 @@
       const fullResult = await upload(`galleries/${currentGalleryId}/full-${file.name}`, file, {
         access: 'public',
         handleUploadUrl: '/api/blob-upload-token',
-        clientPayload: JSON.stringify({}),
-        headers: { 'x-admin-password': adminPassword },
+        clientPayload: JSON.stringify({ adminPassword }),
       });
 
       // 2. Generate a lightweight preview (thumbnail for photos, poster frame for video)
@@ -148,7 +147,7 @@
       const thumbResult = await upload(`galleries/${currentGalleryId}/thumb-${file.name}.jpg`, thumbBlob, {
         access: 'public',
         handleUploadUrl: '/api/blob-upload-token',
-        headers: { 'x-admin-password': adminPassword },
+        clientPayload: JSON.stringify({ adminPassword }),
       });
 
       // 3. Register the media item in the database
