@@ -141,7 +141,7 @@
 
       // 1. Upload the full-resolution original directly to Blob (bypasses server size limits)
       const fullResult = await upload(`galleries/${currentGalleryId}/full-${safeName}`, file, {
-        access: 'private',
+        access: 'public',
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
       });
@@ -149,7 +149,7 @@
       // 2. Generate a lightweight preview (thumbnail for photos, poster frame for video)
       const thumbBlob = isVideo ? await makeVideoPoster(file) : await makeThumbnail(file);
       const thumbResult = await upload(`galleries/${currentGalleryId}/thumb-${safeName}.jpg`, thumbBlob, {
-        access: 'private',
+        access: 'public',
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
       });
