@@ -135,8 +135,12 @@
       const isVideo = file.type.startsWith('video/');
       statusEl.textContent = `Uploading ${file.name} (${isVideo ? 'video' : 'photo'})...`;
 
+      // Storage paths can't safely contain spaces or special characters — sanitize
+      // for the path, but keep the original file.name for display/records.
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
       // 1. Upload the full-resolution original directly to Blob (bypasses server size limits)
-      const fullResult = await upload(`galleries/${currentGalleryId}/full-${file.name}`, file, {
+      const fullResult = await upload(`galleries/${currentGalleryId}/full-${safeName}`, file, {
         access: 'public',
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
@@ -144,7 +148,7 @@
 
       // 2. Generate a lightweight preview (thumbnail for photos, poster frame for video)
       const thumbBlob = isVideo ? await makeVideoPoster(file) : await makeThumbnail(file);
-      const thumbResult = await upload(`galleries/${currentGalleryId}/thumb-${file.name}.jpg`, thumbBlob, {
+      const thumbResult = await upload(`galleries/${currentGalleryId}/thumb-${safeName}.jpg`, thumbBlob, {
         access: 'public',
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
