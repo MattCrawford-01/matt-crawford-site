@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
-    "@vercel/blob": "0.27.0",
+    "@vercel/blob": "latest",
     "stripe": "^17.0.0",
     "resend": "^4.0.0",
     "micro": "^10.0.1"
