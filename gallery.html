@@ -135,7 +135,7 @@
     const grid = document.getElementById('galleryGrid');
     grid.innerHTML = data.media.map(m => `
       <div class="photo" data-id="${m.id}" data-type="${m.type}" onclick="handleTileClick('${m.id}', '${m.type}')">
-        <img src="${m.thumb_url}" alt="${m.filename}">
+        <img src="/api/media-proxy?url=${encodeURIComponent(m.thumb_url)}" alt="${m.filename}">
         ${m.type === 'video' ? '<div class="play-badge">▶</div>' : ''}
         <div class="check">✓</div>
       </div>
@@ -155,7 +155,7 @@
     if (!media) return;
     const overlay = document.getElementById('videoPreviewOverlay');
     const video = document.getElementById('videoPreviewPlayer');
-    video.src = media.blob_url;
+    video.src = `/api/media-proxy?url=${encodeURIComponent(media.blob_url)}`;
     overlay.classList.add('active');
     video.play().catch(() => {});
     // Also allow selecting this video for purchase from within the preview
