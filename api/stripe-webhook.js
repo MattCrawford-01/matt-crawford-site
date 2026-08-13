@@ -30,15 +30,12 @@ export default async function handler(req, res) {
   const photoIds = JSON.parse(meta.photoIds || '[]');
   const shippingAddress = meta.shippingAddress ? JSON.parse(meta.shippingAddress) : null;
 
-  // invoice_creation on the Checkout Session generates a real Stripe invoice automatically —
-  // session.invoice holds its ID once payment completes.
   let invoiceUrl = null;
   if (session.invoice) {
     const invoice = await stripe.invoices.retrieve(session.invoice);
     invoiceUrl = invoice.hosted_invoice_url;
   }
 
-  // Record the order
   await sql`
     INSERT INTO orders (
       gallery_id, stripe_session_id, status, fulfillment_type,
@@ -60,7 +57,6 @@ export default async function handler(req, res) {
   const gallery = galleryResult.rows[0];
 
   if (meta.fulfillmentType === 'digital') {
-    // Look up the purchased items' full-resolution URLs (photos and/or videos)
     const mediaResult = photoIds.length
       ? await sql.query(
           `SELECT blob_url, filename, type FROM media WHERE id = ANY($1::uuid[])`,
@@ -69,7 +65,7 @@ export default async function handler(req, res) {
       : await sql`SELECT blob_url, filename, type FROM media WHERE gallery_id = ${meta.galleryId}`;
 
     const linksHtml = mediaResult.rows
-      .map(m => `<li>${m.filename} (${m.type}) — <a href="${m.blob_url}">Download</a></li>`)
+      .map(m => `<li>${m.filename} (${m.type}) — <a href="https://${req.headers.host}/api/media-proxy?url=${encodeURIComponent(m.blob_url)}">Download</a></li>`)
       .join('');
 
     await resend.emails.send({
@@ -80,7 +76,6 @@ export default async function handler(req, res) {
         ${invoiceUrl ? `<p><a href="${invoiceUrl}">View your invoice/receipt</a></p>` : ''}`,
     });
   } else {
-    // Print order — notify Matt to place it with a lab manually
     const addr = shippingAddress;
     await resend.emails.send({
       from: 'Orders <orders@matt-crawford.com>',
