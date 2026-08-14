@@ -45,16 +45,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Shipping address is required for print items' });
   }
 
-  // Build one Stripe line item per cart entry. Print items charge per print
-  // (quantity = number of photos selected at that size); everything else is qty 1.
+  // Build one Stripe line item per cart entry. "Single" tiers (photo, video, print) charge
+  // per item selected — quantity = number of media ids attached to that line. "Full set"
+  // tiers are a flat price regardless of how many items are in the gallery.
   const line_items = cart.map(item => {
     const price = PRICES[item.key];
-    const isPrint = item.key.startsWith('print_');
-    const quantity = isPrint ? item.mediaIds.length : 1;
+    const isPerItem = item.key.endsWith('_single') || item.key.startsWith('print_');
+    const quantity = isPerItem ? item.mediaIds.length : 1;
     return {
       price_data: {
         currency: 'usd',
-        product_data: { name: isPrint ? `${price.label} (×${quantity})` : price.label },
+        product_data: { name: isPerItem && quantity > 1 ? `${price.label} (×${quantity})` : price.label },
         unit_amount: price.amount,
         tax_behavior: 'exclusive',
       },

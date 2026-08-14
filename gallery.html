@@ -64,7 +64,12 @@
   .cart-panel{border-top:1px solid var(--line); padding-top:40px;}
   .cart-empty{font-family:var(--mono); font-size:13px; color:var(--grey);}
   .cart-item{display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--line); gap:16px;}
-  .cart-item-label{font-size:14px;}
+  .cart-item-left{display:flex; align-items:center; gap:14px; min-width:0;}
+  .cart-item-thumbs{display:flex; flex-shrink:0;}
+  .cart-item-thumbs img{width:44px; height:44px; object-fit:cover; border-radius:3px; border:1px solid var(--line-strong); margin-left:-10px; background:var(--ink-2);}
+  .cart-item-thumbs img:first-child{margin-left:0;}
+  .cart-item-thumbs .thumb-more{width:44px; height:44px; border-radius:3px; border:1px solid var(--line-strong); background:var(--ink-2); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:var(--grey); margin-left:-10px; flex-shrink:0;}
+  .cart-item-label{font-size:14px; min-width:0;}
   .cart-item-label .meta{display:block; font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:3px; letter-spacing:0.04em;}
   .cart-item-right{display:flex; align-items:center; gap:16px; flex-shrink:0;}
   .cart-item-price{font-family:var(--mono); font-size:13px;}
@@ -138,7 +143,7 @@
     <div class="add-card locked" id="cardPhotos">
       <h3>Digital Photos</h3>
       <p class="hint">High-resolution files, delivered by email after checkout.</p>
-      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add this photo — $15 ]</button>
+      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add selected photo(s) — $15 each ]</button>
       <button class="price-btn" id="btnPhotoFullSet" onclick="addToCart('photo_full_set')">[ Add all photos — $99 ]</button>
       <p class="lock-msg" id="lockPhotos">Select exactly one photo above to add it individually — the full set is always available.</p>
     </div>
@@ -146,7 +151,7 @@
     <div class="add-card locked" id="cardVideo">
       <h3>Digital Video</h3>
       <p class="hint">High-resolution files, delivered by email after checkout.</p>
-      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add this video — $49 ]</button>
+      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add selected video(s) — $49 each ]</button>
       <button class="price-btn" id="btnVideoFullSet" onclick="addToCart('video_full_set')">[ Add all videos — $199 ]</button>
       <p class="lock-msg" id="lockVideo">Select exactly one video above to add it individually — the full set is always available.</p>
     </div>
@@ -293,13 +298,21 @@
     // no bearing on whether photos or prints are available, and vice versa.
     const hasAnyPhoto = mediaData.some(m => m.type === 'photo');
     document.getElementById('cardPhotos').classList.toggle('locked', !hasAnyPhoto);
-    document.getElementById('btnPhotoSingle').disabled = selectedPhotos.length !== 1;
+    const photoSingleBtn = document.getElementById('btnPhotoSingle');
+    photoSingleBtn.disabled = selectedPhotos.length === 0;
+    photoSingleBtn.textContent = selectedPhotos.length > 1
+      ? `[ Add ${selectedPhotos.length} photos — $15 each ]`
+      : '[ Add selected photo — $15 ]';
     document.getElementById('btnPhotoFullSet').disabled = !hasAnyPhoto;
     document.getElementById('lockPhotos').style.display = hasAnyPhoto ? 'none' : 'block';
 
     const hasAnyVideo = mediaData.some(m => m.type === 'video');
     document.getElementById('cardVideo').classList.toggle('locked', !hasAnyVideo);
-    document.getElementById('btnVideoSingle').disabled = selectedVideos.length !== 1;
+    const videoSingleBtn = document.getElementById('btnVideoSingle');
+    videoSingleBtn.disabled = selectedVideos.length === 0;
+    videoSingleBtn.textContent = selectedVideos.length > 1
+      ? `[ Add ${selectedVideos.length} videos — $49 each ]`
+      : '[ Add selected video — $49 ]';
     document.getElementById('btnVideoFullSet').disabled = !hasAnyVideo;
     document.getElementById('lockVideo').style.display = hasAnyVideo ? 'none' : 'block';
 
@@ -353,14 +366,28 @@
     let total = 0;
     listEl.innerHTML = cart.map((item, i) => {
       const price = PRICES[item.key];
+      const isPerItem = item.key.endsWith('_single') || item.key.startsWith('print_');
       const isPrint = item.key.startsWith('print_');
-      const qty = isPrint ? item.mediaIds.length : 1;
+      const qty = isPerItem ? item.mediaIds.length : 1;
       const lineTotal = price.amount * qty;
       total += lineTotal;
-      const metaText = isPrint ? `${qty} print${qty > 1 ? 's' : ''}` : `${item.mediaIds.length} item${item.mediaIds.length > 1 ? 's' : ''} included`;
+      const metaText = isPrint
+        ? `${qty} print${qty > 1 ? 's' : ''}`
+        : (isPerItem ? `${qty} item${qty > 1 ? 's' : ''}` : `${item.mediaIds.length} item${item.mediaIds.length > 1 ? 's' : ''} included`);
+
+      const thumbItems = item.mediaIds.map(id => mediaData.find(m => m.id === id)).filter(Boolean);
+      const visibleThumbs = thumbItems.slice(0, 4);
+      const overflowCount = thumbItems.length - visibleThumbs.length;
+      const thumbsHtml = visibleThumbs.map(m =>
+        `<img src="/api/media-proxy?url=${encodeURIComponent(m.thumb_url)}" alt="${m.filename}">`
+      ).join('') + (overflowCount > 0 ? `<span class="thumb-more">+${overflowCount}</span>` : '');
+
       return `
         <div class="cart-item">
-          <div class="cart-item-label">${price.label}<span class="meta">${metaText}</span></div>
+          <div class="cart-item-left">
+            <div class="cart-item-thumbs">${thumbsHtml}</div>
+            <div class="cart-item-label">${price.label}<span class="meta">${metaText}</span></div>
+          </div>
           <div class="cart-item-right">
             <span class="cart-item-price">$${(lineTotal / 100).toFixed(2)}</span>
             <button class="remove-btn" onclick="removeFromCart(${i})" aria-label="Remove">×</button>
