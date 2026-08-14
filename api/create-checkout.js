@@ -4,12 +4,15 @@ import { sql } from '@vercel/postgres';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Simple fixed pricing — adjust to whatever you want to charge.
+// NOTE: all prices temporarily set to $1 for testing — restore real prices before going live.
 const PRICES = {
-  digital_single: { amount: 1500, label: 'Single digital photo' },
-  digital_full_set: { amount: 9900, label: 'Full digital gallery' },
-  print_8x10: { amount: 3500, label: '8x10 print' },
-  print_11x14: { amount: 5500, label: '11x14 print' },
-  print_16x20: { amount: 8500, label: '16x20 print' },
+  photo_single: { amount: 100, label: 'Single digital photo' },
+  photo_full_set: { amount: 100, label: 'Full digital photo gallery' },
+  video_single: { amount: 100, label: 'Single digital video' },
+  video_full_set: { amount: 100, label: 'Full digital video collection' },
+  print_8x10: { amount: 100, label: '8x10 print' },
+  print_11x14: { amount: 100, label: '11x14 print' },
+  print_16x20: { amount: 100, label: '16x20 print' },
 };
 
 export default async function handler(req, res) {
@@ -27,6 +30,7 @@ export default async function handler(req, res) {
   }
   const galleryId = galleryResult.rows[0].id;
   const isPrint = product.startsWith('print_');
+  const isVideo = product.startsWith('video_');
 
   if (isPrint && (!shippingAddress || !shippingAddress.line1)) {
     return res.status(400).json({ error: 'Shipping address is required for print orders' });
