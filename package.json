@@ -8,6 +8,7 @@
     "@vercel/blob": "latest",
     "stripe": "^17.0.0",
     "resend": "^4.0.0",
-    "micro": "^10.0.1"
+    "micro": "^10.0.1",
+    "archiver": "^7.0.1"
   }
 }
