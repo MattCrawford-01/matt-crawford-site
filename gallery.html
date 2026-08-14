@@ -15,7 +15,7 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{background:var(--ink); color:var(--paper); font-family:var(--body); line-height:1.6;}
-  .wrap{max-width:var(--max); margin:0 auto; padding:60px 40px;}
+  .wrap{max-width:var(--max); margin:0 auto; padding:60px 40px 120px;}
   h1,h2{font-family:var(--display); font-weight:800; text-transform:uppercase;}
   .tag{font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
   a{color:inherit;}
@@ -47,54 +47,71 @@
   .clear-link{font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--grey); border-bottom:1px solid var(--line-strong); padding-bottom:2px; cursor:pointer; background:none; border-top:none; border-left:none; border-right:none;}
   .clear-link:hover{color:var(--paper);}
 
-  .panel{padding-top:10px;}
-  .field{margin-bottom:28px; max-width:420px;}
-  .field label{display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin-bottom:9px;}
-  .field input{width:100%; background:transparent; border:none; border-bottom:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:15px; padding:10px 2px;}
-  .field input:focus{outline:none; border-color:var(--paper);}
+  .section-label{margin-bottom:20px;}
 
-  .order-cards{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; background:var(--line);}
-  .order-card{background:var(--ink); padding:26px; display:flex; flex-direction:column; transition:opacity 0.2s ease;}
-  .order-card.locked{opacity:0.45;}
-  .order-card h3{font-family:var(--body); font-weight:700; font-size:16px; text-transform:none; margin-bottom:6px;}
-  .order-card .hint{font-size:13px; color:var(--grey); margin-bottom:18px;}
-  .order-card .lock-msg{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:auto; padding-top:14px;}
+  .add-cards{display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; background:var(--line); margin-bottom:60px;}
+  .add-card{background:var(--ink); padding:26px; display:flex; flex-direction:column; transition:opacity 0.2s ease;}
+  .add-card.locked{opacity:0.45;}
+  .add-card h3{font-family:var(--body); font-weight:700; font-size:16px; text-transform:none; margin-bottom:6px;}
+  .add-card .hint{font-size:13px; color:var(--grey); margin-bottom:18px;}
+  .add-card .lock-msg{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:auto; padding-top:14px;}
   .price-btn{display:block; width:100%; text-align:left; font-family:var(--mono); font-size:12px; letter-spacing:0.04em; background:none; border:1px solid var(--line-strong); color:var(--paper); padding:13px 14px; margin-bottom:10px; cursor:pointer; transition:background 0.15s ease, color 0.15s ease;}
   .price-btn:hover:not(:disabled){background:var(--paper); color:var(--ink);}
   .price-btn:disabled{opacity:0.35; cursor:not-allowed;}
   select{width:100%; background:transparent; border:none; border-bottom:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:14px; padding:10px 2px; margin-bottom:12px;}
   select option{background:var(--ink-2);}
-  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-  .field-row input, #shipFields input{width:100%; background:transparent; border:none; border-bottom:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:13px; padding:9px 2px; margin-bottom:10px;}
-  #shipFields{display:none; margin-top:4px;}
+
+  .cart-panel{border-top:1px solid var(--line); padding-top:40px;}
+  .cart-empty{font-family:var(--mono); font-size:13px; color:var(--grey);}
+  .cart-item{display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--line); gap:16px;}
+  .cart-item-label{font-size:14px;}
+  .cart-item-label .meta{display:block; font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:3px; letter-spacing:0.04em;}
+  .cart-item-right{display:flex; align-items:center; gap:16px; flex-shrink:0;}
+  .cart-item-price{font-family:var(--mono); font-size:13px;}
+  .remove-btn{font-family:var(--mono); font-size:16px; color:var(--grey); background:none; border:none; cursor:pointer; line-height:1;}
+  .remove-btn:hover{color:var(--paper);}
+  .cart-total{display:flex; justify-content:space-between; padding:20px 0 0; font-family:var(--mono); font-size:14px;}
+  .cart-total strong{font-size:16px;}
+
+  .checkout-fields{margin-top:36px; padding-top:36px; border-top:1px solid var(--line);}
+  .field{margin-bottom:22px; max-width:420px;}
+  .field label{display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin-bottom:9px;}
+  .field input{width:100%; background:transparent; border:none; border-bottom:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:15px; padding:10px 2px;}
+  .field input:focus{outline:none; border-color:var(--paper);}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:420px;}
+  #shipFields{display:none;}
   #shipFields.active{display:block;}
 
-  .status{font-family:var(--mono); font-size:12px; color:var(--grey); margin-top:20px;}
+  .checkout-btn{font-family:var(--mono); font-size:13px; letter-spacing:0.08em; text-transform:uppercase; background:var(--paper); color:var(--ink); border:none; padding:16px 28px; cursor:pointer; margin-top:20px;}
+  .checkout-btn:hover:not(:disabled){opacity:0.85;}
+  .checkout-btn:disabled{opacity:0.35; cursor:not-allowed;}
+  .status{font-family:var(--mono); font-size:12px; color:var(--grey); margin-top:16px;}
 
   @media (max-width:860px){
-    .wrap{padding:40px 24px;}
+    .wrap{padding:40px 24px 100px;}
     header{margin-bottom:36px;}
     .grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; margin-bottom:20px;}
     .selection-bar{padding:14px 0; margin-bottom:28px;}
     .selection-bar .summary{font-size:13px;}
-    .order-cards{grid-template-columns:1fr;}
-    .order-card{padding:22px;}
-    .order-card.locked{opacity:0.5;}
+    .add-cards{grid-template-columns:1fr; margin-bottom:40px;}
+    .add-card{padding:22px;}
+    .add-card.locked{opacity:0.5;}
     .video-overlay{padding:16px;}
     .video-overlay video{max-height:50vh;}
     .video-overlay-actions{gap:12px;}
     .video-overlay .btn-outline{padding:12px 16px; font-size:11px;}
+    .cart-item{flex-wrap:wrap;}
   }
 
   @media (max-width:480px){
-    .wrap{padding:32px 18px;}
+    .wrap{padding:32px 18px 90px;}
     .back-link{margin-bottom:28px; font-size:11px;}
     .grid{grid-template-columns:repeat(2, 1fr); gap:8px;}
     .photo .check{width:20px; height:20px;}
     .type-badge{font-size:8px; padding:3px 6px;}
     .play-badge{width:38px; height:38px;}
     .field-row{grid-template-columns:1fr;}
-    .order-card{padding:20px;}
+    .add-card{padding:20px;}
     .price-btn{font-size:11px; padding:12px;}
   }
 </style>
@@ -115,56 +132,70 @@
     <button class="clear-link" onclick="clearSelection()">[ Clear selection ]</button>
   </div>
 
-  <div class="panel">
-    <div class="field">
-      <label for="customerEmail">Your Email</label>
-      <input type="email" id="customerEmail" placeholder="you@example.com" required>
+  <p class="tag section-label">Add To Cart</p>
+  <div class="add-cards">
+
+    <div class="add-card locked" id="cardPhotos">
+      <h3>Digital Photos</h3>
+      <p class="hint">High-resolution files, delivered by email after checkout.</p>
+      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add this photo — $15 ]</button>
+      <button class="price-btn" id="btnPhotoFullSet" onclick="addToCart('photo_full_set')">[ Add all photos — $99 ]</button>
+      <p class="lock-msg" id="lockPhotos">Select exactly one photo above to add it individually — the full set is always available.</p>
     </div>
 
-    <div class="order-cards">
+    <div class="add-card locked" id="cardVideo">
+      <h3>Digital Video</h3>
+      <p class="hint">High-resolution files, delivered by email after checkout.</p>
+      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add this video — $49 ]</button>
+      <button class="price-btn" id="btnVideoFullSet" onclick="addToCart('video_full_set')">[ Add all videos — $199 ]</button>
+      <p class="lock-msg" id="lockVideo">Select exactly one video above to add it individually — the full set is always available.</p>
+    </div>
 
-      <div class="order-card locked" id="cardPhotos">
-        <h3>Digital Photos</h3>
-        <p class="hint">High-resolution files, delivered by email right after purchase.</p>
-        <button class="price-btn" id="btnPhotoSingle" disabled onclick="checkout('photo_single')">[ Buy this photo — $15 ]</button>
-        <button class="price-btn" id="btnPhotoFullSet" onclick="checkout('photo_full_set')">[ Buy all photos — $99 ]</button>
-        <p class="lock-msg" id="lockPhotos">Select exactly one photo above to buy it individually — or buy the full set anytime.</p>
+    <div class="add-card locked" id="cardPrint">
+      <h3>Physical Print</h3>
+      <p class="hint">Printed and shipped to your address. Photos only.</p>
+      <select id="printSize">
+        <option value="print_8x10">8x10 — $35</option>
+        <option value="print_11x14">11x14 — $55</option>
+        <option value="print_16x20">16x20 — $85</option>
+      </select>
+      <button class="price-btn" id="btnPrint" disabled onclick="addToCart(document.getElementById('printSize').value)">[ Add print(s) ]</button>
+      <p class="lock-msg" id="lockPrint">Select one or more photos above to add prints.</p>
+    </div>
+
+  </div>
+
+  <div class="cart-panel">
+    <p class="tag section-label">Your Cart</p>
+    <div id="cartList"><p class="cart-empty">Your cart is empty — add photos, video, or prints above.</p></div>
+    <div class="cart-total" id="cartTotal" style="display:none;">
+      <span>Total (before tax)</span>
+      <strong id="cartTotalAmount">$0</strong>
+    </div>
+
+    <div class="checkout-fields">
+      <div class="field">
+        <label for="customerEmail">Your Email</label>
+        <input type="email" id="customerEmail" placeholder="you@example.com" required>
       </div>
 
-      <div class="order-card locked" id="cardVideo">
-        <h3>Digital Video</h3>
-        <p class="hint">High-resolution files, delivered by email right after purchase.</p>
-        <button class="price-btn" id="btnVideoSingle" disabled onclick="checkout('video_single')">[ Buy this video — $49 ]</button>
-        <button class="price-btn" id="btnVideoFullSet" onclick="checkout('video_full_set')">[ Buy all videos — $199 ]</button>
-        <p class="lock-msg" id="lockVideo">Select exactly one video above to buy it individually — or buy the full set anytime.</p>
-      </div>
-
-      <div class="order-card locked" id="cardPrint">
-        <h3>Physical Print</h3>
-        <p class="hint">Printed and shipped to your address. Photos only.</p>
-        <select id="printSize">
-          <option value="print_8x10">8x10 — $35</option>
-          <option value="print_11x14">11x14 — $55</option>
-          <option value="print_16x20">16x20 — $85</option>
-        </select>
-        <div id="shipFields">
-          <input type="text" id="shipName" placeholder="Full name">
-          <input type="text" id="shipLine1" placeholder="Address">
-          <div class="field-row">
-            <input type="text" id="shipCity" placeholder="City">
-            <input type="text" id="shipState" placeholder="State/Province">
-          </div>
-          <div class="field-row">
-            <input type="text" id="shipZip" placeholder="ZIP/Postal code">
-            <input type="text" id="shipCountry" placeholder="Country">
-          </div>
+      <div id="shipFields">
+        <p class="tag" style="margin-bottom:14px;">Shipping Address (for prints in cart)</p>
+        <div class="field" style="max-width:none;"><input type="text" id="shipName" placeholder="Full name"></div>
+        <div class="field" style="max-width:none;"><input type="text" id="shipLine1" placeholder="Address"></div>
+        <div class="field-row" style="margin-bottom:22px;">
+          <input type="text" id="shipCity" placeholder="City">
+          <input type="text" id="shipState" placeholder="State/Province">
         </div>
-        <button class="price-btn" id="btnPrint" disabled onclick="checkout(document.getElementById('printSize').value)">[ Order print ]</button>
-        <p class="lock-msg" id="lockPrint">Select one or more photos above to order prints. Videos can't be printed.</p>
+        <div class="field-row" style="margin-bottom:22px;">
+          <input type="text" id="shipZip" placeholder="ZIP/Postal code">
+          <input type="text" id="shipCountry" placeholder="Country">
+        </div>
       </div>
 
+      <button class="checkout-btn" id="checkoutBtn" disabled onclick="checkout()">[ Checkout ]</button>
+      <p class="status" id="statusMsg"></p>
     </div>
-    <p class="status" id="statusMsg"></p>
   </div>
 </div>
 
@@ -183,6 +214,19 @@
   const slug = params.get('g');
   let selectedIds = [];
   let mediaData = [];
+  let cart = [];
+
+  // Mirrors the server-side price list — used only to display totals in the cart.
+  // The server is the source of truth for what's actually charged.
+  const PRICES = {
+    photo_single: { amount: 1500, label: 'Digital photo' },
+    photo_full_set: { amount: 9900, label: 'Full digital photo set' },
+    video_single: { amount: 4900, label: 'Digital video' },
+    video_full_set: { amount: 19900, label: 'Full digital video set' },
+    print_8x10: { amount: 3500, label: '8x10 print' },
+    print_11x14: { amount: 5500, label: '11x14 print' },
+    print_16x20: { amount: 8500, label: '16x20 print' },
+  };
 
   async function loadGallery() {
     if (!slug) {
@@ -209,7 +253,7 @@
       </div>
     `).join('');
 
-    updateOrderPanel();
+    updateAddCards();
   }
 
   function toggleSelect(id) {
@@ -222,20 +266,19 @@
       selectedIds.push(id);
       el.classList.add('selected');
     }
-    updateOrderPanel();
+    updateAddCards();
   }
 
   function clearSelection() {
     selectedIds = [];
     document.querySelectorAll('.photo.selected').forEach(el => el.classList.remove('selected'));
-    updateOrderPanel();
+    updateAddCards();
   }
 
-  function updateOrderPanel() {
+  function updateAddCards() {
     const selectedPhotos = mediaData.filter(m => selectedIds.includes(m.id) && m.type === 'photo');
     const selectedVideos = mediaData.filter(m => selectedIds.includes(m.id) && m.type === 'video');
 
-    // Selection summary text
     const summaryEl = document.getElementById('selectionSummary');
     if (selectedIds.length === 0) {
       summaryEl.textContent = 'Tap any photo or video below to select it.';
@@ -246,29 +289,91 @@
       summaryEl.innerHTML = `<strong>${parts.join(' + ')}</strong> selected`;
     }
 
-    // Photos card
-    const hasAnyPhotoInGallery = mediaData.some(m => m.type === 'photo');
-    document.getElementById('cardPhotos').classList.toggle('locked', !hasAnyPhotoInGallery);
+    // Each card only cares about its own media type — a video being selected has
+    // no bearing on whether photos or prints are available, and vice versa.
+    const hasAnyPhoto = mediaData.some(m => m.type === 'photo');
+    document.getElementById('cardPhotos').classList.toggle('locked', !hasAnyPhoto);
     document.getElementById('btnPhotoSingle').disabled = selectedPhotos.length !== 1;
-    document.getElementById('btnPhotoFullSet').disabled = !hasAnyPhotoInGallery;
-    document.getElementById('lockPhotos').style.display = hasAnyPhotoInGallery ? 'none' : 'block';
+    document.getElementById('btnPhotoFullSet').disabled = !hasAnyPhoto;
+    document.getElementById('lockPhotos').style.display = hasAnyPhoto ? 'none' : 'block';
 
-    // Video card
-    const hasAnyVideoInGallery = mediaData.some(m => m.type === 'video');
-    document.getElementById('cardVideo').classList.toggle('locked', !hasAnyVideoInGallery);
+    const hasAnyVideo = mediaData.some(m => m.type === 'video');
+    document.getElementById('cardVideo').classList.toggle('locked', !hasAnyVideo);
     document.getElementById('btnVideoSingle').disabled = selectedVideos.length !== 1;
-    document.getElementById('btnVideoFullSet').disabled = !hasAnyVideoInGallery;
-    document.getElementById('lockVideo').style.display = hasAnyVideoInGallery ? 'none' : 'block';
+    document.getElementById('btnVideoFullSet').disabled = !hasAnyVideo;
+    document.getElementById('lockVideo').style.display = hasAnyVideo ? 'none' : 'block';
 
-    // Print card — needs at least one photo selected, no videos in the selection
-    const printReady = selectedPhotos.length > 0 && selectedVideos.length === 0;
+    const printReady = selectedPhotos.length > 0;
     document.getElementById('cardPrint').classList.toggle('locked', !printReady);
     document.getElementById('btnPrint').disabled = !printReady;
-    document.getElementById('shipFields').classList.toggle('active', printReady);
     document.getElementById('lockPrint').style.display = printReady ? 'none' : 'block';
-    document.getElementById('lockPrint').textContent = selectedVideos.length > 0
-      ? "Videos can't be printed — deselect them to order prints for your selected photos."
-      : 'Select one or more photos above to order prints.';
+  }
+
+  function addToCart(key) {
+    const selectedPhotos = mediaData.filter(m => selectedIds.includes(m.id) && m.type === 'photo');
+    const selectedVideos = mediaData.filter(m => selectedIds.includes(m.id) && m.type === 'video');
+    const allPhotoIds = mediaData.filter(m => m.type === 'photo').map(m => m.id);
+    const allVideoIds = mediaData.filter(m => m.type === 'video').map(m => m.id);
+    const isPrint = key.startsWith('print_');
+
+    let mediaIds = [];
+    if (key === 'photo_single') mediaIds = selectedPhotos.map(m => m.id);
+    else if (key === 'photo_full_set') mediaIds = allPhotoIds;
+    else if (key === 'video_single') mediaIds = selectedVideos.map(m => m.id);
+    else if (key === 'video_full_set') mediaIds = allVideoIds;
+    else if (isPrint) mediaIds = selectedPhotos.map(m => m.id);
+
+    if (mediaIds.length === 0) return;
+
+    cart.push({ key, mediaIds });
+    clearSelection(); // reset picker after adding, so the next add starts fresh
+    renderCart();
+  }
+
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    renderCart();
+  }
+
+  function renderCart() {
+    const listEl = document.getElementById('cartList');
+    const totalEl = document.getElementById('cartTotal');
+    const totalAmountEl = document.getElementById('cartTotalAmount');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const shipFields = document.getElementById('shipFields');
+
+    if (cart.length === 0) {
+      listEl.innerHTML = '<p class="cart-empty">Your cart is empty — add photos, video, or prints above.</p>';
+      totalEl.style.display = 'none';
+      checkoutBtn.disabled = true;
+      shipFields.classList.remove('active');
+      return;
+    }
+
+    let total = 0;
+    listEl.innerHTML = cart.map((item, i) => {
+      const price = PRICES[item.key];
+      const isPrint = item.key.startsWith('print_');
+      const qty = isPrint ? item.mediaIds.length : 1;
+      const lineTotal = price.amount * qty;
+      total += lineTotal;
+      const metaText = isPrint ? `${qty} print${qty > 1 ? 's' : ''}` : `${item.mediaIds.length} item${item.mediaIds.length > 1 ? 's' : ''} included`;
+      return `
+        <div class="cart-item">
+          <div class="cart-item-label">${price.label}<span class="meta">${metaText}</span></div>
+          <div class="cart-item-right">
+            <span class="cart-item-price">$${(lineTotal / 100).toFixed(2)}</span>
+            <button class="remove-btn" onclick="removeFromCart(${i})" aria-label="Remove">×</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    totalEl.style.display = 'flex';
+    totalAmountEl.textContent = `$${(total / 100).toFixed(2)}`;
+    checkoutBtn.disabled = false;
+
+    const hasPrint = cart.some(item => item.key.startsWith('print_'));
+    shipFields.classList.toggle('active', hasPrint);
   }
 
   function openVideoPreview(id) {
@@ -290,26 +395,16 @@
     overlay.classList.remove('active');
   }
 
-  async function checkout(product) {
+  async function checkout() {
     const statusEl = document.getElementById('statusMsg');
     const email = document.getElementById('customerEmail').value;
     if (!email) { statusEl.textContent = 'Please enter your email above first.'; return; }
+    if (cart.length === 0) { statusEl.textContent = 'Your cart is empty.'; return; }
 
-    const selectedPhotos = mediaData.filter(m => selectedIds.includes(m.id) && m.type === 'photo');
-    const selectedVideos = mediaData.filter(m => selectedIds.includes(m.id) && m.type === 'video');
-    const allPhotoIds = mediaData.filter(m => m.type === 'photo').map(m => m.id);
-    const allVideoIds = mediaData.filter(m => m.type === 'video').map(m => m.id);
-    const isPrint = product.startsWith('print_');
-
-    let mediaIds = [];
+    const hasPrint = cart.some(item => item.key.startsWith('print_'));
     let shippingAddress = null;
 
-    if (product === 'photo_single') mediaIds = selectedPhotos.map(m => m.id);
-    else if (product === 'photo_full_set') mediaIds = allPhotoIds;
-    else if (product === 'video_single') mediaIds = selectedVideos.map(m => m.id);
-    else if (product === 'video_full_set') mediaIds = allVideoIds;
-    else if (isPrint) {
-      mediaIds = selectedPhotos.map(m => m.id);
+    if (hasPrint) {
       shippingAddress = {
         name: document.getElementById('shipName').value,
         line1: document.getElementById('shipLine1').value,
@@ -319,7 +414,7 @@
         country: document.getElementById('shipCountry').value,
       };
       if (!shippingAddress.name || !shippingAddress.line1 || !shippingAddress.city) {
-        statusEl.textContent = 'Please fill in your full shipping address.';
+        statusEl.textContent = 'Please fill in your full shipping address for the print(s) in your cart.';
         return;
       }
     }
@@ -331,8 +426,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         gallerySlug: slug,
-        product,
-        photoIds: mediaIds,
+        cart,
         shippingAddress,
         customerEmail: email,
       }),

@@ -25,11 +25,11 @@ CREATE TABLE IF NOT EXISTS media (
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   gallery_id UUID REFERENCES galleries(id),
-  stripe_session_id TEXT UNIQUE NOT NULL,
+  stripe_session_id TEXT UNIQUE,            -- set once checkout session is created; null while cart is being built
   status TEXT NOT NULL DEFAULT 'pending',   -- pending -> paid -> fulfilled
-  fulfillment_type TEXT NOT NULL,           -- 'digital' or 'print'
-  product_details JSONB,                    -- selected photos, print size/qty, etc.
-  shipping_address JSONB,                   -- null for digital orders
+  fulfillment_type TEXT NOT NULL,           -- 'digital', 'print', or 'mixed' (cart contains both)
+  product_details JSONB,                    -- { cart: [...] } — full cart contents, one entry per line item
+  shipping_address JSONB,                   -- null unless the cart contains at least one print item
   amount_total INT,                         -- in cents
   customer_email TEXT,
   stripe_invoice_id TEXT,                   -- auto-generated Stripe invoice, from invoice_creation
@@ -45,3 +45,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_gallery ON orders(gallery_id);
 -- to add the new columns to your existing orders table (safe to run even if already present):
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS stripe_invoice_id TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_url TEXT;
+
+-- If you already ran this schema before the cart update, run this line to allow orders
+-- to be created before a Stripe session exists (needed so carts can be stored up front):
+ALTER TABLE orders ALTER COLUMN stripe_session_id DROP NOT NULL;

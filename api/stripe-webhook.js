@@ -26,43 +26,50 @@ export default async function handler(req, res) {
   }
 
   const session = event.data.object;
-  const meta = session.metadata;
-  const photoIds = JSON.parse(meta.photoIds || '[]');
-  const shippingAddress = meta.shippingAddress ? JSON.parse(meta.shippingAddress) : null;
 
+  // invoice_creation on the Checkout Session generates a real Stripe invoice automatically —
+  // session.invoice holds its ID once payment completes.
   let invoiceUrl = null;
   if (session.invoice) {
     const invoice = await stripe.invoices.retrieve(session.invoice);
     invoiceUrl = invoice.hosted_invoice_url;
   }
 
+  // The order row was created up front (with the full cart) when checkout started —
+  // look it up by session id and mark it paid, rather than inserting a new row here.
+  const orderResult = await sql`SELECT * FROM orders WHERE stripe_session_id = ${session.id};`;
+  if (orderResult.rows.length === 0) {
+    // Shouldn't normally happen — every session is created with a matching order row.
+    return res.status(200).json({ received: true, warning: 'No matching order found' });
+  }
+  const order = orderResult.rows[0];
+
   await sql`
-    INSERT INTO orders (
-      gallery_id, stripe_session_id, status, fulfillment_type,
-      product_details, shipping_address, amount_total, customer_email,
-      stripe_invoice_id, invoice_url
-    ) VALUES (
-      ${meta.galleryId}, ${session.id}, 'paid', ${meta.fulfillmentType},
-      ${JSON.stringify({ product: meta.product, photoIds })},
-      ${shippingAddress ? JSON.stringify(shippingAddress) : null},
-      ${session.amount_total}, ${session.customer_email},
-      ${session.invoice || null}, ${invoiceUrl}
-    )
-    ON CONFLICT (stripe_session_id) DO NOTHING;
+    UPDATE orders SET
+      status = 'paid',
+      amount_total = ${session.amount_total},
+      customer_email = ${session.customer_email},
+      stripe_invoice_id = ${session.invoice || null},
+      invoice_url = ${invoiceUrl}
+    WHERE id = ${order.id};
   `;
 
+  const cart = order.product_details.cart;
+  const digitalItems = cart.filter(item => !item.key.startsWith('print_'));
+  const printItems = cart.filter(item => item.key.startsWith('print_'));
+
   const galleryResult = await sql`
-    SELECT client_name, client_business FROM galleries WHERE id = ${meta.galleryId};
+    SELECT client_name, client_business FROM galleries WHERE id = ${order.gallery_id};
   `;
   const gallery = galleryResult.rows[0];
 
-  if (meta.fulfillmentType === 'digital') {
-    const mediaResult = photoIds.length
-      ? await sql.query(
-          `SELECT blob_url, filename, type FROM media WHERE id = ANY($1::uuid[])`,
-          [photoIds]
-        )
-      : await sql`SELECT blob_url, filename, type FROM media WHERE gallery_id = ${meta.galleryId}`;
+  // Digital delivery — one email covering every digital item in the cart (photos and/or video)
+  if (digitalItems.length > 0) {
+    const allDigitalIds = [...new Set(digitalItems.flatMap(item => item.mediaIds))];
+    const mediaResult = await sql.query(
+      `SELECT blob_url, filename, type FROM media WHERE id = ANY($1::uuid[])`,
+      [allDigitalIds]
+    );
 
     const linksHtml = mediaResult.rows
       .map(m => `<li>${m.filename} (${m.type}) — <a href="https://${req.headers.host}/api/media-proxy?url=${encodeURIComponent(m.blob_url)}">Download</a></li>`)
@@ -71,20 +78,36 @@ export default async function handler(req, res) {
     await resend.emails.send({
       from: 'Matt Crawford <orders@matt-crawford.com>',
       to: session.customer_email,
-      subject: 'Your photos are ready to download',
+      subject: 'Your photos and videos are ready to download',
       html: `<p>Thanks for your order! Here are your download links:</p><ul>${linksHtml}</ul>
         ${invoiceUrl ? `<p><a href="${invoiceUrl}">View your invoice/receipt</a></p>` : ''}`,
     });
-  } else {
-    const addr = shippingAddress;
+  }
+
+  // Print fulfillment — one notification to Matt covering every print item in the cart
+  if (printItems.length > 0) {
+    const addr = order.shipping_address;
+    const allPrintIds = [...new Set(printItems.flatMap(item => item.mediaIds))];
+    const mediaResult = allPrintIds.length
+      ? await sql.query(`SELECT id, filename FROM media WHERE id = ANY($1::uuid[])`, [allPrintIds])
+      : { rows: [] };
+    const filenameById = Object.fromEntries(mediaResult.rows.map(m => [m.id, m.filename]));
+
+    const printLinesHtml = printItems.map(item => {
+      const sizeLabel = item.key.replace('print_', '').replace('x', '×');
+      const names = item.mediaIds.map(id => filenameById[id] || id).join(', ');
+      return `<li>${sizeLabel} — ${item.mediaIds.length} print(s): ${names}</li>`;
+    }).join('');
+
     await resend.emails.send({
       from: 'Orders <orders@matt-crawford.com>',
       to: 'contact@matt-crawford.com',
       subject: `New print order — ${gallery.client_name}`,
       html: `
         <p><strong>Client:</strong> ${gallery.client_name} (${gallery.client_business || 'n/a'})</p>
-        <p><strong>Product:</strong> ${meta.product}</p>
-        <p><strong>Amount paid:</strong> $${(session.amount_total / 100).toFixed(2)}</p>
+        <p><strong>Prints:</strong></p>
+        <ul>${printLinesHtml}</ul>
+        <p><strong>Amount paid (full order):</strong> $${(session.amount_total / 100).toFixed(2)}</p>
         <p><strong>Ship to:</strong><br>
           ${addr.name}<br>${addr.line1}<br>${addr.city}, ${addr.state} ${addr.postal_code}<br>${addr.country}
         </p>
