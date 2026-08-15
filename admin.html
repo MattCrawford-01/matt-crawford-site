@@ -30,6 +30,16 @@
   .status{font-family:var(--mono); font-size:12px; color:var(--grey); margin-top:12px;}
   .thumbrow{display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;}
   .thumbrow img{width:70px; height:70px; object-fit:cover;}
+
+  .upload-progress{display:none; margin-top:16px;}
+  .upload-progress-track{width:100%; height:6px; background:var(--ink-2); border:1px solid var(--line-strong); overflow:hidden; position:relative;}
+  .upload-progress-fill{height:100%; background:var(--paper); width:0%; transition:width 0.25s ease;}
+  .upload-progress-fill.indeterminate{width:30%; animation:upload-indeterminate 1.2s infinite ease-in-out;}
+  @keyframes upload-indeterminate{
+    0%{transform:translateX(-100%);}
+    100%{transform:translateX(400%);}
+  }
+  .upload-progress-text{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:8px; display:flex; justify-content:space-between; gap:12px;}
 </style>
 </head>
 <body>
@@ -72,6 +82,15 @@
       </div>
       <button class="btn" onclick="uploadPhotos()">[ Upload Selected Files ]</button>
       <p class="status" id="uploadStatus"></p>
+      <div class="upload-progress" id="uploadProgress">
+        <div class="upload-progress-track">
+          <div class="upload-progress-fill" id="uploadProgressFill"></div>
+        </div>
+        <div class="upload-progress-text">
+          <span id="uploadProgressLabel">0%</span>
+          <span id="uploadProgressEta">Estimating time remaining...</span>
+        </div>
+      </div>
       <div class="thumbrow" id="thumbPreview"></div>
     </div>
 
@@ -131,20 +150,69 @@
     if (!currentGalleryId) { statusEl.textContent = 'Create a gallery first.'; return; }
     if (files.length === 0) { statusEl.textContent = 'Choose files first.'; return; }
 
+    const progressWrap = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('uploadProgressFill');
+    const progressLabel = document.getElementById('uploadProgressLabel');
+    const progressEta = document.getElementById('uploadProgressEta');
+
+    // Total bytes to move = every file's real size, plus a rough flat estimate for
+    // the generated thumbnail/poster that gets uploaded alongside each one.
+    const THUMB_ESTIMATE_BYTES = 150 * 1024;
+    const totalBytes = Array.from(files).reduce((sum, f) => sum + f.size, 0) + files.length * THUMB_ESTIMATE_BYTES;
+    let uploadedBytes = 0;
+    const startTime = Date.now();
+
+    progressWrap.style.display = 'block';
+    progressFill.classList.add('indeterminate');
+    progressFill.style.width = '';
+    progressLabel.textContent = 'Starting...';
+    progressEta.textContent = 'Estimating time remaining...';
+
+    function renderProgress() {
+      const pct = Math.min(100, Math.round((uploadedBytes / totalBytes) * 100));
+      progressFill.classList.remove('indeterminate');
+      progressFill.style.width = pct + '%';
+      progressLabel.textContent = pct + '%';
+
+      const elapsedSec = (Date.now() - startTime) / 1000;
+      if (elapsedSec < 1 || uploadedBytes === 0) {
+        progressEta.textContent = 'Estimating time remaining...';
+        return;
+      }
+      const bytesPerSec = uploadedBytes / elapsedSec; // recalculated every tick — self-corrects as the real speed becomes clear
+      const remainingSec = Math.max(0, (totalBytes - uploadedBytes) / bytesPerSec);
+      progressEta.textContent = remainingSec < 3 ? 'Almost done...' : `~${formatDuration(remainingSec)} remaining`;
+    }
+
+    let fileIndex = 0;
+
     for (const file of files) {
+      fileIndex++;
       const isVideo = file.type.startsWith('video/');
-      statusEl.textContent = `Uploading ${file.name} (${isVideo ? 'video' : 'photo'})...`;
+      statusEl.textContent = `Uploading ${file.name} (${isVideo ? 'video' : 'photo'}) — file ${fileIndex} of ${files.length}...`;
 
       // Storage paths can't safely contain spaces or special characters — sanitize
       // for the path, but keep the original file.name for display/records.
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      const bytesBeforeThisFile = uploadedBytes;
 
       // 1. Upload the full-resolution original directly to Blob (bypasses server size limits)
       const fullResult = await upload(`galleries/${currentGalleryId}/full-${safeName}`, file, {
         access: 'private',
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
+        onUploadProgress: (event) => {
+          // Not every environment reports this consistently — if it fires, use it
+          // for a live in-progress read on the current file; if it never fires,
+          // the bar just stays indeterminate until the file completes below, which
+          // still moves it forward accurately at each file boundary.
+          uploadedBytes = bytesBeforeThisFile + (event.loaded || 0);
+          renderProgress();
+        },
       });
+      uploadedBytes = bytesBeforeThisFile + file.size;
+      renderProgress();
 
       // 2. Generate a lightweight preview (thumbnail for photos, poster frame for video)
       const thumbBlob = isVideo ? await makeVideoPoster(file) : await makeThumbnail(file);
@@ -153,6 +221,8 @@
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
       });
+      uploadedBytes += THUMB_ESTIMATE_BYTES;
+      renderProgress();
 
       // 3. Register the media item in the database
       await fetch('/api/admin-register-media', {
@@ -173,7 +243,18 @@
       document.getElementById('thumbPreview').appendChild(preview);
     }
 
+    progressFill.style.width = '100%';
+    progressLabel.textContent = '100%';
+    progressEta.textContent = 'Complete';
     statusEl.textContent = `Done — ${files.length} file(s) uploaded.`;
+    setTimeout(() => { progressWrap.style.display = 'none'; }, 2000);
+  }
+
+  function formatDuration(seconds) {
+    if (seconds < 60) return `${Math.ceil(seconds)}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}m ${secs}s`;
   }
 
   function makeThumbnail(file) {
