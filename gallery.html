@@ -160,9 +160,9 @@
       <h3>Physical Print</h3>
       <p class="hint">Printed and shipped to your address. Photos only.</p>
       <select id="printSize">
-        <option value="print_8x10">8x10 — $35</option>
-        <option value="print_11x14">11x14 — $55</option>
-        <option value="print_16x20">16x20 — $85</option>
+        <option value="print_18x24">18×24 framed (gold foil) — $35</option>
+        <option value="print_24x36">24×36 framed (gold foil) — $55</option>
+        <option value="print_30x40">30×40 framed (gold foil) — $85</option>
       </select>
       <button class="price-btn" id="btnPrint" disabled onclick="addToCart(document.getElementById('printSize').value)">[ Add print(s) ]</button>
       <p class="lock-msg" id="lockPrint">Select one or more photos above to add prints.</p>
@@ -194,7 +194,21 @@
         </div>
         <div class="field-row" style="margin-bottom:22px;">
           <input type="text" id="shipZip" placeholder="ZIP/Postal code">
-          <input type="text" id="shipCountry" placeholder="Country">
+          <select id="shipCountry">
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+            <option value="GB">United Kingdom</option>
+            <option value="AU">Australia</option>
+            <option value="NZ">New Zealand</option>
+            <option value="IE">Ireland</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="ES">Spain</option>
+            <option value="IT">Italy</option>
+            <option value="NL">Netherlands</option>
+            <option value="MX">Mexico</option>
+            <option value="JP">Japan</option>
+          </select>
         </div>
       </div>
 
@@ -228,9 +242,9 @@
     photo_full_set: { amount: 9900, label: 'Full digital photo set' },
     video_single: { amount: 4900, label: 'Digital video' },
     video_full_set: { amount: 19900, label: 'Full digital video set' },
-    print_8x10: { amount: 3500, label: '8x10 print' },
-    print_11x14: { amount: 5500, label: '11x14 print' },
-    print_16x20: { amount: 8500, label: '16x20 print' },
+    print_18x24: { amount: 3500, label: '18×24 framed print (gold foil)' },
+    print_24x36: { amount: 5500, label: '24×36 framed print (gold foil)' },
+    print_30x40: { amount: 8500, label: '30×40 framed print (gold foil)' },
   };
 
   async function loadGallery() {

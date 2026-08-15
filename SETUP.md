@@ -90,5 +90,41 @@ Every order — digital or print — now automatically generates a real Stripe i
 
 If you later want *standalone* invoicing (billing a client directly for a custom shoot, outside the gallery/checkout flow entirely), that's a separate feature — let me know if you want that built too.
 
+## Automated Print Fulfillment (Prodigi)
+Print orders are now sent to Prodigi automatically the moment payment clears — no manual step, no placing orders yourself. Here's how to get it live:
+
+### 1. Create a Prodigi account
+- Sign up at prodigi.com — no application/approval process, works immediately
+- In your dashboard, find **API Keys** (there are separate keys for **Sandbox** and **Production** — start with Sandbox)
+
+### 2. Confirm your product SKUs
+The code currently uses placeholder SKUs (`GLOBAL-FAP-8x10`, `GLOBAL-FAP-11x14`, `GLOBAL-FAP-16x20`) in `api/stripe-webhook.js` under `PRODIGI_SKU_MAP`. Before going live:
+- Browse Prodigi's product catalog in your dashboard for the paper/finish you actually want to sell
+- Update the three SKU values in `PRODIGI_SKU_MAP` to match exactly
+
+### 3. Set environment variables in Vercel
+| Variable | Value |
+|---|---|
+| `PRODIGI_API_KEY` | your Sandbox key, to start |
+| `PRODIGI_API_URL` | `https://api.sandbox.prodigi.com/v4.0` (Sandbox) — leave unset to default to this |
+
+### 4. Test with a real (sandbox) order first
+Run a full $1 test purchase that includes a print. Check:
+- You get an email confirming it was sent to Prodigi (green success message), or a clear "ACTION NEEDED" email if something went wrong
+- Log into Prodigi's Sandbox dashboard and confirm the order actually appears there with the correct image, size, and shipping address
+
+### 5. Go live
+Once a sandbox order looks right end-to-end:
+- Get your **Production** API key from Prodigi
+- Update `PRODIGI_API_KEY` in Vercel to the production key
+- Update `PRODIGI_API_URL` to `https://api.prodigi.com/v4.0`
+- Redeploy
+
+### If a Prodigi order ever fails
+You'll still get an email — just with an "ACTION NEEDED" subject line and the actual error message instead of a success confirmation, so nothing gets fulfilled silently or lost. You'd place that specific order manually, same as before this automation existed.
+
+### A quality note, carried over from our earlier conversation
+Prodigi is a self-serve, no-approval-needed service — it's what makes true day-one automation possible, but it's a notch below what a dedicated professional photo lab (WHCC, Bay Photo, Miller's) produces. If you later get approved with one of those, swapping fulfillment providers only means changing the `createProdigiOrder` function in `stripe-webhook.js` — everything else in the system stays the same.
+
 ## Pricing
 Current prices are set in `api/create-checkout.js` (the `PRICES` object). Edit the dollar amounts there any time — no other changes needed.
