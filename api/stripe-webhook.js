@@ -31,6 +31,8 @@ async function createProdigiOrder({ printItems, mediaById, shippingAddress, host
     sku: PRODIGI_SKU_MAP[item.key],
     copies: item.mediaIds.length,
     sizing: 'fillPrintArea',
+    // This product line requires a color attribute — these SKUs are the gold foil frame.
+    attributes: { color: 'gold' },
     assets: item.mediaIds.map(id => ({
       printArea: 'default',
       // Prodigi fetches the image itself from this URL — routing through our own
