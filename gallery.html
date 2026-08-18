@@ -32,6 +32,15 @@
   .type-badge{position:absolute; top:10px; left:10px; font-family:var(--mono); font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:var(--paper); background:rgba(10,10,10,0.55); padding:4px 7px; border-radius:3px;}
   .play-badge{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:rgba(10,10,10,0.6); border:1.5px solid var(--paper); display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; z-index:2;}
   .play-badge:hover{background:rgba(10,10,10,0.85);}
+  .dim-badge{position:absolute; bottom:10px; left:10px; font-family:var(--mono); font-size:9px; letter-spacing:0.03em; color:var(--paper); background:rgba(10,10,10,0.55); padding:4px 7px; border-radius:3px;}
+  .expand-badge{position:absolute; bottom:10px; right:10px; width:26px; height:26px; border-radius:50%; background:rgba(10,10,10,0.55); border:1px solid var(--line-strong); display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; z-index:2; color:var(--paper);}
+  .expand-badge:hover{background:rgba(10,10,10,0.85);}
+
+  .print-suitability{margin-top:20px; text-align:left;}
+  .print-suitability-row{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:12px;}
+  .print-suitability-row:last-child{border-bottom:none;}
+  .print-suitability-row .status-ok{color:var(--paper);}
+  .print-suitability-row .status-warn{color:var(--grey);}
 
   .video-overlay{position:fixed; inset:0; z-index:300; background:rgba(10,10,10,0.96); display:none; align-items:center; justify-content:center; padding:40px;}
   .video-overlay.active{display:flex;}
@@ -228,6 +237,17 @@
   </div>
 </div>
 
+<div class="video-overlay" id="photoPreviewOverlay">
+  <div class="video-overlay-content">
+    <img id="photoPreviewImg" src="" alt="" style="width:100%; max-height:60vh; object-fit:contain; display:block; background:#000;">
+    <div id="photoPreviewInfo" class="print-suitability"></div>
+    <div class="video-overlay-actions">
+      <button class="btn-outline" id="selectFromPhotoPreview">[ Select This Photo ]</button>
+      <button class="btn-outline" onclick="closePhotoPreview()">[ Close ]</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('g');
@@ -267,7 +287,10 @@
       <div class="photo" data-id="${m.id}" data-type="${m.type}" onclick="toggleSelect('${m.id}')">
         <img src="/api/media-proxy?url=${encodeURIComponent(m.thumb_url)}" alt="${m.filename}">
         <span class="type-badge">${m.type}</span>
-        ${m.type === 'video' ? `<div class="play-badge" onclick="event.stopPropagation(); openVideoPreview('${m.id}')">▶</div>` : ''}
+        ${m.width_px && m.height_px ? `<span class="dim-badge">${m.width_px}×${m.height_px}</span>` : ''}
+        ${m.type === 'video'
+          ? `<div class="play-badge" onclick="event.stopPropagation(); openVideoPreview('${m.id}')">▶</div>`
+          : `<div class="expand-badge" onclick="event.stopPropagation(); openPhotoPreview('${m.id}')">⤢</div>`}
         <div class="check">✓</div>
       </div>
     `).join('');
@@ -434,6 +457,58 @@
     video.pause();
     video.removeAttribute('src');
     overlay.classList.remove('active');
+  }
+
+  // The three print sizes offered, in inches, matched to their cart product keys.
+  const PRINT_SIZES_INCHES = [
+    { key: 'print_18x24', label: '18×24', w: 18, h: 24 },
+    { key: 'print_24x36', label: '24×36', w: 24, h: 36 },
+    { key: 'print_30x40', label: '30×40', w: 30, h: 40 },
+  ];
+  // Below this, a large framed print tends to look visibly soft even viewed from a
+  // normal distance on a wall — this is a looser threshold than the ~300 DPI used for
+  // handheld prints, since large wall art is viewed from further away.
+  const MIN_RECOMMENDED_DPI = 150;
+
+  function getAchievableDpi(widthPx, heightPx, printW, printH) {
+    const photoShort = Math.min(widthPx, heightPx);
+    const photoLong = Math.max(widthPx, heightPx);
+    const printShort = Math.min(printW, printH);
+    const printLong = Math.max(printW, printH);
+    // The photo's weaker dimension (relative to the print) is what actually limits quality.
+    return Math.min(photoShort / printShort, photoLong / printLong);
+  }
+
+  function buildPrintSuitabilityHtml(widthPx, heightPx) {
+    if (!widthPx || !heightPx) {
+      return '<p style="font-family:var(--mono); font-size:12px; color:var(--grey);">Print suitability unavailable for this image.</p>';
+    }
+    const rows = PRINT_SIZES_INCHES.map(size => {
+      const dpi = getAchievableDpi(widthPx, heightPx, size.w, size.h);
+      const ok = dpi >= MIN_RECOMMENDED_DPI;
+      return `
+        <div class="print-suitability-row">
+          <span>${size.label}</span>
+          <span class="${ok ? 'status-ok' : 'status-warn'}">${ok ? '✓ Recommended' : `Below recommended (${Math.round(dpi)} DPI)`}</span>
+        </div>`;
+    }).join('');
+    return `<p style="font-family:var(--mono); font-size:11px; letter-spacing:0.05em; text-transform:uppercase; color:var(--grey); margin-bottom:4px;">${widthPx} × ${heightPx} px</p>${rows}`;
+  }
+
+  function openPhotoPreview(id) {
+    const media = mediaData.find(m => m.id === id);
+    if (!media) return;
+    const overlay = document.getElementById('photoPreviewOverlay');
+    const img = document.getElementById('photoPreviewImg');
+    img.src = `/api/media-proxy?url=${encodeURIComponent(media.thumb_url)}`;
+    img.alt = media.filename;
+    document.getElementById('photoPreviewInfo').innerHTML = buildPrintSuitabilityHtml(media.width_px, media.height_px);
+    overlay.classList.add('active');
+    document.getElementById('selectFromPhotoPreview').onclick = () => { toggleSelect(id); closePhotoPreview(); };
+  }
+
+  function closePhotoPreview() {
+    document.getElementById('photoPreviewOverlay').classList.remove('active');
   }
 
   async function checkout() {

@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   const mediaResult = await sql`
-    SELECT id, type, thumb_url, blob_url, filename FROM media
+    SELECT id, type, thumb_url, blob_url, filename, width_px, height_px FROM media
     WHERE gallery_id = ${gallery.id}
     ORDER BY sort_order ASC;
   `;

@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS media (
   thumb_url TEXT NOT NULL,              -- preview image (photo thumb, or video poster frame)
   filename TEXT NOT NULL,
   file_size_bytes BIGINT,
+  width_px INT,                         -- native pixel width of the full-res original
+  height_px INT,                        -- native pixel height of the full-res original
   sort_order INT DEFAULT 0
 );
 
@@ -49,3 +51,8 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_url TEXT;
 -- If you already ran this schema before the cart update, run this line to allow orders
 -- to be created before a Stripe session exists (needed so carts can be stored up front):
 ALTER TABLE orders ALTER COLUMN stripe_session_id DROP NOT NULL;
+
+-- If you already ran this schema before dimension tracking was added, run these two
+-- lines to add width/height storage to your existing media table:
+ALTER TABLE media ADD COLUMN IF NOT EXISTS width_px INT;
+ALTER TABLE media ADD COLUMN IF NOT EXISTS height_px INT;

@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!isAuthorized(req)) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { galleryId, type, blobUrl, thumbUrl, filename, fileSizeBytes } = req.body;
+  const { galleryId, type, blobUrl, thumbUrl, filename, fileSizeBytes, widthPx, heightPx } = req.body;
 
   if (!galleryId || !type || !blobUrl || !thumbUrl || !filename) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -19,8 +19,8 @@ export default async function handler(req, res) {
   `;
 
   await sql`
-    INSERT INTO media (gallery_id, type, blob_url, thumb_url, filename, file_size_bytes, sort_order)
-    VALUES (${galleryId}, ${type}, ${blobUrl}, ${thumbUrl}, ${filename}, ${fileSizeBytes || null}, ${maxOrder.rows[0].next});
+    INSERT INTO media (gallery_id, type, blob_url, thumb_url, filename, file_size_bytes, width_px, height_px, sort_order)
+    VALUES (${galleryId}, ${type}, ${blobUrl}, ${thumbUrl}, ${filename}, ${fileSizeBytes || null}, ${widthPx || null}, ${heightPx || null}, ${maxOrder.rows[0].next});
   `;
 
   res.status(200).json({ success: true });
