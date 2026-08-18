@@ -4,15 +4,14 @@ import { sql } from '@vercel/postgres';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Simple fixed pricing — adjust to whatever you want to charge.
-// NOTE: all prices temporarily set to $1 for testing — restore real prices before going live.
 const PRICES = {
-  photo_single: { amount: 100, label: 'Single digital photo' },
-  photo_full_set: { amount: 100, label: 'Full digital photo gallery' },
-  video_single: { amount: 100, label: 'Single digital video' },
-  video_full_set: { amount: 100, label: 'Full digital video collection' },
-  print_18x24: { amount: 100, label: '18×24 framed print (gold foil)' },
-  print_24x36: { amount: 100, label: '24×36 framed print (gold foil)' },
-  print_30x40: { amount: 100, label: '30×40 framed print (gold foil)' },
+  photo_single: { amount: 5999, label: 'Single digital photo' },
+  photo_full_set: { amount: 19900, label: 'Full digital photo gallery' },
+  video_single: { amount: 7999, label: 'Single digital video' },
+  video_full_set: { amount: 19900, label: 'Full digital video collection' },
+  print_18x24: { amount: 14999, label: '18×24 framed print (gold foil)' },
+  print_24x36: { amount: 17999, label: '24×36 framed print (gold foil)' },
+  print_30x40: { amount: 23999, label: '30×40 framed print (gold foil)' },
 };
 
 export default async function handler(req, res) {

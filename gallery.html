@@ -160,9 +160,9 @@
       <h3>Physical Print</h3>
       <p class="hint">Printed and shipped to your address. Photos only.</p>
       <select id="printSize">
-        <option value="print_18x24">18×24 framed (gold foil) — $35</option>
-        <option value="print_24x36">24×36 framed (gold foil) — $55</option>
-        <option value="print_30x40">30×40 framed (gold foil) — $85</option>
+        <option value="print_18x24">18×24 framed (gold foil) — $149.99</option>
+        <option value="print_24x36">24×36 framed (gold foil) — $179.99</option>
+        <option value="print_30x40">30×40 framed (gold foil) — $239.99</option>
       </select>
       <button class="price-btn" id="btnPrint" disabled onclick="addToCart(document.getElementById('printSize').value)">[ Add print(s) ]</button>
       <p class="lock-msg" id="lockPrint">Select one or more photos above to add prints.</p>
@@ -238,13 +238,13 @@
   // Mirrors the server-side price list — used only to display totals in the cart.
   // The server is the source of truth for what's actually charged.
   const PRICES = {
-    photo_single: { amount: 1500, label: 'Digital photo' },
-    photo_full_set: { amount: 9900, label: 'Full digital photo set' },
-    video_single: { amount: 4900, label: 'Digital video' },
+    photo_single: { amount: 5999, label: 'Digital photo' },
+    photo_full_set: { amount: 19900, label: 'Full digital photo set' },
+    video_single: { amount: 7999, label: 'Digital video' },
     video_full_set: { amount: 19900, label: 'Full digital video set' },
-    print_18x24: { amount: 3500, label: '18×24 framed print (gold foil)' },
-    print_24x36: { amount: 5500, label: '24×36 framed print (gold foil)' },
-    print_30x40: { amount: 8500, label: '30×40 framed print (gold foil)' },
+    print_18x24: { amount: 14999, label: '18×24 framed print (gold foil)' },
+    print_24x36: { amount: 17999, label: '24×36 framed print (gold foil)' },
+    print_30x40: { amount: 23999, label: '30×40 framed print (gold foil)' },
   };
 
   async function loadGallery() {
