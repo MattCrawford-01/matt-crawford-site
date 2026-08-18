@@ -71,13 +71,7 @@
     <p class="tag">Admin</p>
     <h1>Gallery Dashboard</h1>
 
-    <div style="margin-top:40px;">
-      <p class="tag">Your Galleries</p>
-      <p class="status" id="galleriesStatus" style="margin-top:8px;">Loading...</p>
-      <div class="gallery-list" id="galleriesList"></div>
-    </div>
-
-    <h1 style="margin-top:60px;">Create a New Gallery</h1>
+    <h1 style="margin-top:0;">Create a New Gallery</h1>
 
     <div class="field">
       <label>Client Name</label>
@@ -114,6 +108,13 @@
     </div>
 
     <div class="result" id="linkResult" style="display:none;"></div>
+
+    <div style="margin-top:60px;">
+      <p class="tag">Your Galleries</p>
+      <p class="status" id="galleriesStatus" style="margin-top:8px;">Loading...</p>
+      <div class="gallery-list" id="galleriesList"></div>
+      <button class="btn-small" id="showMoreGalleriesBtn" onclick="showMoreGalleries()" style="display:none;">[ Show More ]</button>
+    </div>
   </div>
 
 </div>
@@ -165,9 +166,11 @@
     loadGalleries(); // refresh the list so the new gallery shows up right away
   }
 
+  let allGalleries = [];
+  let galleriesExpanded = false;
+
   async function loadGalleries() {
     const statusEl = document.getElementById('galleriesStatus');
-    const listEl = document.getElementById('galleriesList');
 
     const res = await fetch('/api/admin-list-galleries', {
       headers: { 'x-admin-password': adminPassword },
@@ -179,15 +182,27 @@
     }
 
     const data = await res.json();
+    allGalleries = data.galleries;
+    galleriesExpanded = false;
+    renderGalleriesList();
+  }
 
-    if (data.galleries.length === 0) {
-      statusEl.textContent = 'No galleries yet — create your first one below.';
+  function renderGalleriesList() {
+    const statusEl = document.getElementById('galleriesStatus');
+    const listEl = document.getElementById('galleriesList');
+    const showMoreBtn = document.getElementById('showMoreGalleriesBtn');
+
+    if (allGalleries.length === 0) {
+      statusEl.textContent = 'No galleries yet — create your first one above.';
       listEl.innerHTML = '';
+      showMoreBtn.style.display = 'none';
       return;
     }
 
     statusEl.textContent = '';
-    listEl.innerHTML = data.galleries.map(g => {
+    const visible = galleriesExpanded ? allGalleries : allGalleries.slice(0, 3);
+
+    listEl.innerHTML = visible.map(g => {
       const created = new Date(g.created_at).toLocaleDateString();
       const link = `https://${window.location.host}/gallery.html?g=${g.slug}`;
       return `
@@ -205,6 +220,14 @@
           </div>
         </div>`;
     }).join('');
+
+    // Only worth showing the button if there's actually more to reveal
+    showMoreBtn.style.display = (!galleriesExpanded && allGalleries.length > 3) ? 'inline-block' : 'none';
+  }
+
+  function showMoreGalleries() {
+    galleriesExpanded = true;
+    renderGalleriesList();
   }
 
   function toggleDuplicateForm(galleryId) {
