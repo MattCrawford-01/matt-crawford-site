@@ -40,6 +40,17 @@
     100%{transform:translateX(400%);}
   }
   .upload-progress-text{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:8px; display:flex; justify-content:space-between; gap:12px;}
+
+  .gallery-list{margin-top:16px;}
+  .gallery-item{border:1px solid var(--line-strong); padding:16px; margin-bottom:10px;}
+  .gallery-item-name{font-size:14px; font-weight:600;}
+  .gallery-item-meta{font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:4px;}
+  .gallery-item-link{font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:8px; word-break:break-all;}
+  .btn-small{font-family:var(--mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; background:none; border:1px solid var(--line-strong); color:var(--paper); padding:8px 14px; cursor:pointer; margin-top:12px;}
+  .btn-small:hover{background:var(--paper); color:var(--ink);}
+  .duplicate-form{display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);}
+  .duplicate-form.active{display:block;}
+  .duplicate-form input{margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -58,7 +69,15 @@
 
   <div id="adminScreen">
     <p class="tag">Admin</p>
-    <h1>Create a New Gallery</h1>
+    <h1>Gallery Dashboard</h1>
+
+    <div style="margin-top:40px;">
+      <p class="tag">Your Galleries</p>
+      <p class="status" id="galleriesStatus" style="margin-top:8px;">Loading...</p>
+      <div class="gallery-list" id="galleriesList"></div>
+    </div>
+
+    <h1 style="margin-top:60px;">Create a New Gallery</h1>
 
     <div class="field">
       <label>Client Name</label>
@@ -107,6 +126,7 @@
     adminPassword = document.getElementById('passwordInput').value;
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('adminScreen').classList.add('active');
+    loadGalleries();
   }
 
   async function createGallery() {
@@ -141,6 +161,88 @@
     const linkEl = document.getElementById('linkResult');
     linkEl.style.display = 'block';
     linkEl.textContent = data.galleryUrl;
+
+    loadGalleries(); // refresh the list so the new gallery shows up right away
+  }
+
+  async function loadGalleries() {
+    const statusEl = document.getElementById('galleriesStatus');
+    const listEl = document.getElementById('galleriesList');
+
+    const res = await fetch('/api/admin-list-galleries', {
+      headers: { 'x-admin-password': adminPassword },
+    });
+
+    if (res.status === 401) {
+      statusEl.textContent = 'Wrong admin password.';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.galleries.length === 0) {
+      statusEl.textContent = 'No galleries yet — create your first one below.';
+      listEl.innerHTML = '';
+      return;
+    }
+
+    statusEl.textContent = '';
+    listEl.innerHTML = data.galleries.map(g => {
+      const created = new Date(g.created_at).toLocaleDateString();
+      const link = `https://${window.location.host}/gallery.html?g=${g.slug}`;
+      return `
+        <div class="gallery-item">
+          <div class="gallery-item-name">${g.client_business || g.client_name}</div>
+          <div class="gallery-item-meta">${g.client_name} · ${g.media_count} item${g.media_count == 1 ? '' : 's'} · created ${created}</div>
+          <div class="gallery-item-link">${link}</div>
+          <button class="btn-small" onclick="toggleDuplicateForm('${g.id}')">[ Duplicate to New Client ]</button>
+          <div class="duplicate-form" id="dupForm-${g.id}">
+            <input type="text" placeholder="New client name" id="dupName-${g.id}">
+            <input type="text" placeholder="New business name (optional)" id="dupBusiness-${g.id}">
+            <input type="email" placeholder="New client email" id="dupEmail-${g.id}">
+            <button class="btn-small" onclick="submitDuplicate('${g.id}')">[ Create Duplicate ]</button>
+            <p class="status" id="dupStatus-${g.id}"></p>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleDuplicateForm(galleryId) {
+    document.getElementById(`dupForm-${galleryId}`).classList.toggle('active');
+  }
+
+  async function submitDuplicate(sourceGalleryId) {
+    const statusEl = document.getElementById(`dupStatus-${sourceGalleryId}`);
+    const clientName = document.getElementById(`dupName-${sourceGalleryId}`).value;
+    const clientBusiness = document.getElementById(`dupBusiness-${sourceGalleryId}`).value;
+    const clientEmail = document.getElementById(`dupEmail-${sourceGalleryId}`).value;
+
+    if (!clientName || !clientEmail) {
+      statusEl.textContent = 'New client name and email are required.';
+      return;
+    }
+
+    statusEl.textContent = 'Duplicating...';
+
+    const res = await fetch('/api/admin-duplicate-gallery', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify({ sourceGalleryId, clientName, clientBusiness, clientEmail }),
+    });
+
+    if (res.status === 401) {
+      statusEl.textContent = 'Wrong admin password.';
+      return;
+    }
+    if (!res.ok) {
+      const err = await res.json();
+      statusEl.textContent = err.error || 'Something went wrong.';
+      return;
+    }
+
+    const data = await res.json();
+    statusEl.innerHTML = `Done — ${data.mediaCopied} item(s) copied.<br>${data.galleryUrl}`;
+    loadGalleries(); // refresh so the new duplicate shows up in the list too
   }
 
   async function uploadPhotos() {
