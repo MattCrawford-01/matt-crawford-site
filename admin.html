@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- deploy check: forcing fresh build after install command fix -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -41,18 +40,22 @@
   }
   .upload-progress-text{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:8px; display:flex; justify-content:space-between; gap:12px;}
 
-  .gallery-list{margin-top:16px;}
-  .gallery-item{border:1px solid var(--line-strong); padding:16px; margin-bottom:10px;}
-  .gallery-item-name{font-size:14px; font-weight:600;}
-  .gallery-item-meta{font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:4px;}
+  .gallery-list, .order-list{margin-top:16px;}
+  .gallery-item, .order-item{border:1px solid var(--line-strong); padding:16px; margin-bottom:10px;}
+  .gallery-item-name, .order-item-name{font-size:14px; font-weight:600;}
+  .gallery-item-meta, .order-item-meta{font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:4px;}
   .gallery-item-link{font-family:var(--mono); font-size:10.5px; color:var(--grey); margin-top:8px; word-break:break-all;}
   .btn-small{font-family:var(--mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; background:none; border:1px solid var(--line-strong); color:var(--paper); padding:8px 14px; cursor:pointer; margin-top:12px;}
+  .btn-small:hover{background:var(--paper); color:var(--ink);}
   .btn-small.btn-danger{border-color:rgba(200,90,90,0.5); color:#d98c8c; margin-left:8px;}
   .btn-small.btn-danger:hover{background:#c85a5a; color:var(--paper); border-color:#c85a5a;}
-  .btn-small:hover{background:var(--paper); color:var(--ink);}
   .duplicate-form{display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);}
   .duplicate-form.active{display:block;}
   .duplicate-form input{margin-bottom:10px;}
+
+  .order-item-lines{font-family:var(--body); font-size:13px; color:var(--paper); margin-top:10px; line-height:1.7;}
+  .order-item-ship{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:10px; line-height:1.6;}
+  .fulfilled-badge{display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#7ac47a; margin-top:12px;}
 </style>
 </head>
 <body>
@@ -116,6 +119,13 @@
       <div class="gallery-list" id="galleriesList"></div>
       <button class="btn-small" id="showMoreGalleriesBtn" onclick="showMoreGalleries()" style="display:none;">[ Show More ]</button>
     </div>
+
+    <div style="margin-top:60px;">
+      <p class="tag">Your Orders</p>
+      <p class="status" id="ordersStatus" style="margin-top:8px;">Loading...</p>
+      <div class="order-list" id="ordersList"></div>
+      <button class="btn-small" id="showMoreOrdersBtn" onclick="showMoreOrders()" style="display:none;">[ Show More ]</button>
+    </div>
   </div>
 
 </div>
@@ -129,6 +139,7 @@
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('adminScreen').classList.add('active');
     loadGalleries();
+    loadOrders();
   }
 
   async function createGallery() {
@@ -164,8 +175,10 @@
     linkEl.style.display = 'block';
     linkEl.textContent = data.galleryUrl;
 
-    loadGalleries(); // refresh the list so the new gallery shows up right away
+    loadGalleries();
   }
+
+  // ---------- Galleries list ----------
 
   let allGalleries = [];
   let galleriesExpanded = false;
@@ -224,7 +237,6 @@
         </div>`;
     }).join('');
 
-    // Only worth showing the button if there's actually more to reveal
     showMoreBtn.style.display = (!galleriesExpanded && allGalleries.length > 3) ? 'inline-block' : 'none';
   }
 
@@ -253,19 +265,17 @@
       statusEl.textContent = 'Wrong admin password.';
       return;
     }
-
     if (res.status === 409) {
       const data = await res.json();
       statusEl.textContent = data.error;
       return;
     }
-
     if (!res.ok) {
       statusEl.textContent = 'Something went wrong — please try again.';
       return;
     }
 
-    loadGalleries(); // refresh the list so the deleted gallery disappears
+    loadGalleries();
   }
 
   function toggleDuplicateForm(galleryId) {
@@ -303,8 +313,123 @@
 
     const data = await res.json();
     statusEl.innerHTML = `Done — ${data.mediaCopied} item(s) copied.<br>${data.galleryUrl}`;
-    loadGalleries(); // refresh so the new duplicate shows up in the list too
+    loadGalleries();
   }
+
+  // ---------- Orders list ----------
+
+  let allOrders = [];
+  let ordersExpanded = false;
+
+  const PRODUCT_LABELS = {
+    photo_single: 'Digital photo',
+    photo_full_set: 'Full digital photo set',
+    video_single: 'Digital video',
+    video_full_set: 'Full digital video set',
+    print_18x24: '18×24 framed print',
+    print_24x36: '24×36 framed print',
+    print_30x40: '30×40 framed print',
+  };
+
+  async function loadOrders() {
+    const statusEl = document.getElementById('ordersStatus');
+
+    const res = await fetch('/api/admin-list-orders', {
+      headers: { 'x-admin-password': adminPassword },
+    });
+
+    if (res.status === 401) {
+      statusEl.textContent = 'Wrong admin password.';
+      return;
+    }
+
+    const data = await res.json();
+    allOrders = data.orders;
+    ordersExpanded = false;
+    renderOrdersList();
+  }
+
+  function renderOrdersList() {
+    const statusEl = document.getElementById('ordersStatus');
+    const listEl = document.getElementById('ordersList');
+    const showMoreBtn = document.getElementById('showMoreOrdersBtn');
+
+    if (allOrders.length === 0) {
+      statusEl.textContent = 'No orders yet.';
+      listEl.innerHTML = '';
+      showMoreBtn.style.display = 'none';
+      return;
+    }
+
+    statusEl.textContent = '';
+    const visible = ordersExpanded ? allOrders : allOrders.slice(0, 5);
+
+    listEl.innerHTML = visible.map(o => {
+      const created = new Date(o.created_at).toLocaleDateString();
+      const cart = (o.product_details && o.product_details.cart) || [];
+      const hasPrintItems = cart.some(item => item.key.startsWith('print_'));
+
+      const linesHtml = cart.map(item => {
+        const label = PRODUCT_LABELS[item.key] || item.key;
+        const isPer = item.key.endsWith('_single') || item.key.startsWith('print_');
+        const qty = isPer ? item.mediaIds.length : 1;
+        return `${label}${qty > 1 || item.key.startsWith('print_') ? ` (×${qty})` : ''}`;
+      }).join(' · ');
+
+      const addr = o.shipping_address;
+      const shipHtml = addr
+        ? `<div class="order-item-ship">Ship to: ${addr.name}, ${addr.line1}, ${addr.city}, ${addr.state} ${addr.postal_code}, ${addr.country}</div>`
+        : '';
+
+      const fulfillHtml = hasPrintItems
+        ? (o.fulfilled_at
+            ? `<div class="fulfilled-badge">✓ Fulfilled ${new Date(o.fulfilled_at).toLocaleDateString()}</div>`
+            : `<button class="btn-small" onclick="markFulfilled('${o.id}')">[ Mark as Fulfilled ]</button>`)
+        : '';
+
+      return `
+        <div class="order-item">
+          <div class="order-item-name">${o.client_business || o.client_name || 'Unknown client'}</div>
+          <div class="order-item-meta">${o.customer_email} · $${(o.amount_total / 100).toFixed(2)} · ${o.fulfillment_type} · ${created}</div>
+          <div class="order-item-lines">${linesHtml}</div>
+          ${shipHtml}
+          ${o.invoice_url ? `<div style="margin-top:10px;"><a href="${o.invoice_url}" style="color:var(--grey); font-family:var(--mono); font-size:11px;" target="_blank">[ View Invoice ]</a></div>` : ''}
+          ${fulfillHtml}
+          <p class="status" id="fulfillStatus-${o.id}"></p>
+        </div>`;
+    }).join('');
+
+    showMoreBtn.style.display = (!ordersExpanded && allOrders.length > 5) ? 'inline-block' : 'none';
+  }
+
+  function showMoreOrders() {
+    ordersExpanded = true;
+    renderOrdersList();
+  }
+
+  async function markFulfilled(orderId) {
+    const statusEl = document.getElementById(`fulfillStatus-${orderId}`);
+    statusEl.textContent = 'Updating...';
+
+    const res = await fetch('/api/admin-mark-fulfilled', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify({ orderId }),
+    });
+
+    if (res.status === 401) {
+      statusEl.textContent = 'Wrong admin password.';
+      return;
+    }
+    if (!res.ok) {
+      statusEl.textContent = 'Something went wrong.';
+      return;
+    }
+
+    loadOrders();
+  }
+
+  // ---------- Upload ----------
 
   async function uploadPhotos() {
     const { upload } = await import('https://esm.sh/@vercel/blob@latest/client');
@@ -318,8 +443,6 @@
     const progressLabel = document.getElementById('uploadProgressLabel');
     const progressEta = document.getElementById('uploadProgressEta');
 
-    // Total bytes to move = every file's real size, plus a rough flat estimate for
-    // the generated thumbnail/poster that gets uploaded alongside each one.
     const THUMB_ESTIMATE_BYTES = 150 * 1024;
     const totalBytes = Array.from(files).reduce((sum, f) => sum + f.size, 0) + files.length * THUMB_ESTIMATE_BYTES;
     let uploadedBytes = 0;
@@ -342,7 +465,7 @@
         progressEta.textContent = 'Estimating time remaining...';
         return;
       }
-      const bytesPerSec = uploadedBytes / elapsedSec; // recalculated every tick — self-corrects as the real speed becomes clear
+      const bytesPerSec = uploadedBytes / elapsedSec;
       const remainingSec = Math.max(0, (totalBytes - uploadedBytes) / bytesPerSec);
       progressEta.textContent = remainingSec < 3 ? 'Almost done...' : `~${formatDuration(remainingSec)} remaining`;
     }
@@ -354,22 +477,14 @@
       const isVideo = file.type.startsWith('video/');
       statusEl.textContent = `Uploading ${file.name} (${isVideo ? 'video' : 'photo'}) — file ${fileIndex} of ${files.length}...`;
 
-      // Storage paths can't safely contain spaces or special characters — sanitize
-      // for the path, but keep the original file.name for display/records.
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-
       const bytesBeforeThisFile = uploadedBytes;
 
-      // 1. Upload the full-resolution original directly to Blob (bypasses server size limits)
       const fullResult = await upload(`galleries/${currentGalleryId}/full-${safeName}`, file, {
         access: 'private',
         handleUploadUrl: '/api/blob-upload-token',
         clientPayload: JSON.stringify({ adminPassword }),
         onUploadProgress: (event) => {
-          // Not every environment reports this consistently — if it fires, use it
-          // for a live in-progress read on the current file; if it never fires,
-          // the bar just stays indeterminate until the file completes below, which
-          // still moves it forward accurately at each file boundary.
           uploadedBytes = bytesBeforeThisFile + (event.loaded || 0);
           renderProgress();
         },
@@ -377,7 +492,6 @@
       uploadedBytes = bytesBeforeThisFile + file.size;
       renderProgress();
 
-      // 2. Generate a lightweight preview (thumbnail for photos, poster frame for video)
       const thumbBlob = isVideo ? await makeVideoPoster(file) : await makeThumbnail(file);
       const thumbResult = await upload(`galleries/${currentGalleryId}/thumb-${safeName}.jpg`, thumbBlob, {
         access: 'private',
@@ -387,11 +501,8 @@
       uploadedBytes += THUMB_ESTIMATE_BYTES;
       renderProgress();
 
-      // Read the original file's actual pixel dimensions — used later to tell clients
-      // which print sizes a given photo can support at good quality.
       const dimensions = await getMediaDimensions(file, isVideo);
 
-      // 3. Register the media item in the database
       await fetch('/api/admin-register-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
@@ -417,6 +528,8 @@
     progressEta.textContent = 'Complete';
     statusEl.textContent = `Done — ${files.length} file(s) uploaded.`;
     setTimeout(() => { progressWrap.style.display = 'none'; }, 2000);
+
+    loadGalleries();
   }
 
   function formatDuration(seconds) {

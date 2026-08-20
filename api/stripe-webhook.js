@@ -73,6 +73,83 @@ function buildDownloadEmailHtml({ downloadUrl, invoiceUrl }) {
 </body>`;
 }
 
+// Same visual system as buildDownloadEmailHtml above, adapted for the print-order
+// notification you receive — internal, but styled to match your brand consistently.
+function buildPrintOrderEmailHtml({
+  clientName, clientBusiness, printLinesHtml, printDownloadLinksHtml,
+  amountPaid, shippingAddress, orderId, invoiceUrl,
+}) {
+  const mono = "'IBM Plex Mono', 'Courier New', monospace";
+  const body = "Arial, Helvetica, sans-serif";
+  const addr = shippingAddress;
+
+  const section = (label, contentHtml) => `
+    <tr>
+      <td style="border-top:1px solid rgba(244,243,239,0.14); padding-top:24px; padding-bottom:24px;">
+        <p style="font-family:${mono}; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#8c8c86; margin:0 0 12px;">${label}</p>
+        ${contentHtml}
+      </td>
+    </tr>`;
+
+  return `
+<body style="margin:0; padding:0; background:#0a0a0a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
+    <tr>
+      <td align="center" style="padding:48px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+          <tr>
+            <td style="font-family:${mono}; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#f4f3ef; padding-bottom:32px;">
+              Matt Crawford
+            </td>
+          </tr>
+
+          <tr>
+            <td style="border-top:1px solid rgba(244,243,239,0.14); padding-top:36px;">
+              <p style="font-family:${mono}; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#8c8c86; margin:0 0 14px;">New Print Order</p>
+              <h1 style="font-family:${body}; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; font-size:24px; line-height:1.3; color:#f4f3ef; margin:0 0 8px;">${clientName}</h1>
+              ${clientBusiness ? `<p style="font-family:${body}; font-size:14px; color:#8c8c86; margin:0;">${clientBusiness}</p>` : ''}
+            </td>
+          </tr>
+
+          ${section('Prints', `<div style="font-family:${body}; font-size:14px; color:#f4f3ef; line-height:1.8;">${printLinesHtml}</div>`)}
+
+          ${section('Full-Res Files', `<div style="font-family:${mono}; font-size:12px; color:#8c8c86; line-height:2;">${printDownloadLinksHtml}</div>`)}
+
+          ${section('Amount Paid (Full Order)', `<p style="font-family:${body}; font-size:18px; color:#f4f3ef; margin:0;">$${amountPaid}</p>`)}
+
+          ${section('Ship To', `<p style="font-family:${body}; font-size:14px; color:#f4f3ef; line-height:1.7; margin:0;">${addr.name}<br>${addr.line1}<br>${addr.city}, ${addr.state} ${addr.postal_code}<br>${addr.country}</p>`)}
+
+          ${section('Order Details', `
+            <p style="font-family:${mono}; font-size:11px; color:#8c8c86; margin:0 0 10px; word-break:break-all;">Order ID: ${orderId}</p>
+            ${invoiceUrl ? `<a href="${invoiceUrl}" style="font-family:${mono}; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#8c8c86; text-decoration:none; border-bottom:1px solid rgba(140,140,134,0.5);">[ View Invoice / Receipt ]</a>` : ''}
+          `)}
+
+          <tr>
+            <td style="border-top:1px solid rgba(244,243,239,0.14); padding-top:28px;">
+              <p style="font-family:${mono}; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#8c8c86; margin:0 0 14px;">Matt Crawford — Aerial Cinematography</p>
+              <p style="font-family:${body}; font-size:13px; color:#f4f3ef; margin:0 0 6px;">
+                <a href="https://www.matt-crawford.com" style="color:#f4f3ef; text-decoration:none; border-bottom:1px solid rgba(244,243,239,0.28);">matt-crawford.com</a>
+              </p>
+              <p style="font-family:${body}; font-size:13px; color:#8c8c86; margin:0 0 6px;">
+                <a href="mailto:contact@matt-crawford.com" style="color:#8c8c86; text-decoration:none;">contact@matt-crawford.com</a>
+                &nbsp;·&nbsp;
+                <a href="tel:+17788713118" style="color:#8c8c86; text-decoration:none;">(778) 871-3118</a>
+              </p>
+              <p style="font-family:${body}; font-size:13px; color:#8c8c86; margin:0 0 24px;">
+                <a href="https://www.instagram.com/matt.crawf0rd/" style="color:#8c8c86; text-decoration:none;">Instagram: @matt.crawf0rd</a>
+              </p>
+              <p style="font-family:${mono}; font-size:10px; color:#57564f; margin:0;">© ${new Date().getFullYear()} Matt Crawford</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>`;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -168,19 +245,16 @@ export default async function handler(req, res) {
       from: 'Orders <orders@matt-crawford.com>',
       to: 'contact@matt-crawford.com',
       subject: `New print order — ${gallery.client_name}`,
-      html: `
-        <p><strong>Client:</strong> ${gallery.client_name} (${gallery.client_business || 'n/a'})</p>
-        <p><strong>Prints:</strong></p>
-        <ul>${printLinesHtml}</ul>
-        <p><strong>Full-res files:</strong></p>
-        <ul>${printDownloadLinksHtml}</ul>
-        <p><strong>Amount paid (full order):</strong> $${(session.amount_total / 100).toFixed(2)}</p>
-        <p><strong>Ship to:</strong><br>
-          ${addr.name}<br>${addr.line1}<br>${addr.city}, ${addr.state} ${addr.postal_code}<br>${addr.country}
-        </p>
-        <p><strong>Order ID:</strong> ${session.id}</p>
-        ${invoiceUrl ? `<p><strong>Invoice:</strong> <a href="${invoiceUrl}">${invoiceUrl}</a></p>` : ''}
-      `,
+      html: buildPrintOrderEmailHtml({
+        clientName: gallery.client_name,
+        clientBusiness: gallery.client_business,
+        printLinesHtml,
+        printDownloadLinksHtml,
+        amountPaid: (session.amount_total / 100).toFixed(2),
+        shippingAddress: addr,
+        orderId: session.id,
+        invoiceUrl,
+      }),
     });
   }
 
