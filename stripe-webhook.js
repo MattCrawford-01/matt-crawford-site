@@ -76,7 +76,6 @@ function buildDownloadEmailHtml({ downloadUrl, invoiceUrl }) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-
   const sig = req.headers['stripe-signature'];
   const buf = await buffer(req);
 
@@ -142,7 +141,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // Print fulfillment — you're now handling every print order yourself locally in
+  // Print fulfillment — you're handling every print order yourself locally in
   // Vancouver, so this just notifies you with everything needed to place and ship it:
   // which sizes, which photos, and the shipping address.
   if (printItems.length > 0) {
