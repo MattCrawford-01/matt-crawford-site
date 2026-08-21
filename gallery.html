@@ -169,9 +169,9 @@
       <h3>Physical Print</h3>
       <p class="hint">Printed and shipped to your address. Photos only.</p>
       <select id="printSize">
-        <option value="print_20x30">20×30 framed (gold foil) — $349.99</option>
-        <option value="print_24x36">24×36 framed (gold foil) — $499.99</option>
-        <option value="print_30x40">30×40 framed (gold foil) — $699.99</option>
+        <option value="print_20x30">20×30 framed — $349.99</option>
+        <option value="print_24x36">24×36 framed — $499.99</option>
+        <option value="print_30x40">30×40 framed — $699.99</option>
       </select>
       <button class="price-btn" id="btnPrint" disabled onclick="addToCart(document.getElementById('printSize').value)">[ Add print(s) ]</button>
       <p class="lock-msg" id="lockPrint">Select one or more photos above to add prints.</p>
@@ -262,9 +262,9 @@
     photo_full_set: { amount: 24999, label: 'Full digital photo set' },
     video_single: { amount: 7999, label: 'Digital video' },
     video_full_set: { amount: 39999, label: 'Full digital video set' },
-    print_20x30: { amount: 34999, label: '20×30 framed print (gold foil)' },
-    print_24x36: { amount: 49999, label: '24×36 framed print (gold foil)' },
-    print_30x40: { amount: 69999, label: '30×40 framed print (gold foil)' },
+    print_20x30: { amount: 34999, label: '20×30 framed print' },
+    print_24x36: { amount: 49999, label: '24×36 framed print' },
+    print_30x40: { amount: 69999, label: '30×40 framed print' },
   };
 
   async function loadGallery() {

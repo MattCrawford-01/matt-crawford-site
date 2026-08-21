@@ -9,9 +9,9 @@ const PRICES = {
   photo_full_set: { amount: 24999, label: 'Full digital photo gallery' },
   video_single: { amount: 7999, label: 'Single digital video' },
   video_full_set: { amount: 39999, label: 'Full digital video collection' },
-  print_20x30: { amount: 34999, label: '20×30 framed print (gold foil)' },
-  print_24x36: { amount: 49999, label: '24×36 framed print (gold foil)' },
-  print_30x40: { amount: 69999, label: '30×40 framed print (gold foil)' },
+  print_20x30: { amount: 34999, label: '20×30 framed print' },
+  print_24x36: { amount: 49999, label: '24×36 framed print' },
+  print_30x40: { amount: 69999, label: '30×40 framed print' },
 };
 
 export default async function handler(req, res) {
