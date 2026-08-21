@@ -152,26 +152,26 @@
     <div class="add-card locked" id="cardPhotos">
       <h3>Digital Photos</h3>
       <p class="hint">High-resolution files, delivered by email after checkout.</p>
-      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add selected photo(s) — $15 each ]</button>
-      <button class="price-btn" id="btnPhotoFullSet" onclick="addToCart('photo_full_set')">[ Add all photos — $99 ]</button>
-      <p class="lock-msg" id="lockPhotos">Select exactly one photo above to add it individually — the full set is always available.</p>
+      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add selected photo(s) — $59.99 each ]</button>
+      <button class="price-btn" id="btnPhotoFullSet" onclick="addToCart('photo_full_set')">[ Add all photos — $249.99 ]</button>
+      <p class="lock-msg" id="lockPhotos">Select one or more photos above to add them — the full set is always available.</p>
     </div>
 
     <div class="add-card locked" id="cardVideo">
       <h3>Digital Video</h3>
       <p class="hint">High-resolution files, delivered by email after checkout.</p>
-      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add selected video(s) — $49 each ]</button>
-      <button class="price-btn" id="btnVideoFullSet" onclick="addToCart('video_full_set')">[ Add all videos — $199 ]</button>
-      <p class="lock-msg" id="lockVideo">Select exactly one video above to add it individually — the full set is always available.</p>
+      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add selected video(s) — $79.99 each ]</button>
+      <button class="price-btn" id="btnVideoFullSet" onclick="addToCart('video_full_set')">[ Add all videos — $399.99 ]</button>
+      <p class="lock-msg" id="lockVideo">Select one or more videos above to add them — the full set is always available.</p>
     </div>
 
     <div class="add-card locked" id="cardPrint">
       <h3>Physical Print</h3>
       <p class="hint">Printed and shipped to your address. Photos only.</p>
       <select id="printSize">
-        <option value="print_18x24">18×24 framed (gold foil) — $149.99</option>
-        <option value="print_24x36">24×36 framed (gold foil) — $179.99</option>
-        <option value="print_30x40">30×40 framed (gold foil) — $239.99</option>
+        <option value="print_20x30">20×30 framed (gold foil) — $349.99</option>
+        <option value="print_24x36">24×36 framed (gold foil) — $499.99</option>
+        <option value="print_30x40">30×40 framed (gold foil) — $699.99</option>
       </select>
       <button class="price-btn" id="btnPrint" disabled onclick="addToCart(document.getElementById('printSize').value)">[ Add print(s) ]</button>
       <p class="lock-msg" id="lockPrint">Select one or more photos above to add prints.</p>
@@ -259,12 +259,12 @@
   // The server is the source of truth for what's actually charged.
   const PRICES = {
     photo_single: { amount: 5999, label: 'Digital photo' },
-    photo_full_set: { amount: 19900, label: 'Full digital photo set' },
+    photo_full_set: { amount: 24999, label: 'Full digital photo set' },
     video_single: { amount: 7999, label: 'Digital video' },
-    video_full_set: { amount: 19900, label: 'Full digital video set' },
-    print_18x24: { amount: 14999, label: '18×24 framed print (gold foil)' },
-    print_24x36: { amount: 17999, label: '24×36 framed print (gold foil)' },
-    print_30x40: { amount: 23999, label: '30×40 framed print (gold foil)' },
+    video_full_set: { amount: 39999, label: 'Full digital video set' },
+    print_20x30: { amount: 34999, label: '20×30 framed print (gold foil)' },
+    print_24x36: { amount: 49999, label: '24×36 framed print (gold foil)' },
+    print_30x40: { amount: 69999, label: '30×40 framed print (gold foil)' },
   };
 
   async function loadGallery() {
@@ -331,15 +331,13 @@
       summaryEl.innerHTML = `<strong>${parts.join(' + ')}</strong> selected`;
     }
 
-    // Each card only cares about its own media type — a video being selected has
-    // no bearing on whether photos or prints are available, and vice versa.
     const hasAnyPhoto = mediaData.some(m => m.type === 'photo');
     document.getElementById('cardPhotos').classList.toggle('locked', !hasAnyPhoto);
     const photoSingleBtn = document.getElementById('btnPhotoSingle');
     photoSingleBtn.disabled = selectedPhotos.length === 0;
     photoSingleBtn.textContent = selectedPhotos.length > 1
-      ? `[ Add ${selectedPhotos.length} photos — $15 each ]`
-      : '[ Add selected photo — $15 ]';
+      ? `[ Add ${selectedPhotos.length} photos — $59.99 each ]`
+      : '[ Add selected photo — $59.99 ]';
     document.getElementById('btnPhotoFullSet').disabled = !hasAnyPhoto;
     document.getElementById('lockPhotos').style.display = hasAnyPhoto ? 'none' : 'block';
 
@@ -348,8 +346,8 @@
     const videoSingleBtn = document.getElementById('btnVideoSingle');
     videoSingleBtn.disabled = selectedVideos.length === 0;
     videoSingleBtn.textContent = selectedVideos.length > 1
-      ? `[ Add ${selectedVideos.length} videos — $49 each ]`
-      : '[ Add selected video — $49 ]';
+      ? `[ Add ${selectedVideos.length} videos — $79.99 each ]`
+      : '[ Add selected video — $79.99 ]';
     document.getElementById('btnVideoFullSet').disabled = !hasAnyVideo;
     document.getElementById('lockVideo').style.display = hasAnyVideo ? 'none' : 'block';
 
@@ -376,7 +374,7 @@
     if (mediaIds.length === 0) return;
 
     cart.push({ key, mediaIds });
-    clearSelection(); // reset picker after adding, so the next add starts fresh
+    clearSelection();
     renderCart();
   }
 
@@ -461,13 +459,10 @@
 
   // The three print sizes offered, in inches, matched to their cart product keys.
   const PRINT_SIZES_INCHES = [
-    { key: 'print_18x24', label: '18×24', w: 18, h: 24 },
+    { key: 'print_20x30', label: '20×30', w: 20, h: 30 },
     { key: 'print_24x36', label: '24×36', w: 24, h: 36 },
     { key: 'print_30x40', label: '30×40', w: 30, h: 40 },
   ];
-  // Below this, a large framed print tends to look visibly soft even viewed from a
-  // normal distance on a wall — this is a looser threshold than the ~300 DPI used for
-  // handheld prints, since large wall art is viewed from further away.
   const MIN_RECOMMENDED_DPI = 150;
 
   function getAchievableDpi(widthPx, heightPx, printW, printH) {
@@ -475,7 +470,6 @@
     const photoLong = Math.max(widthPx, heightPx);
     const printShort = Math.min(printW, printH);
     const printLong = Math.max(printW, printH);
-    // The photo's weaker dimension (relative to the print) is what actually limits quality.
     return Math.min(photoShort / printShort, photoLong / printLong);
   }
 
