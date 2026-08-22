@@ -4,7 +4,8 @@ import { sql } from '@vercel/postgres';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Real, locked-in pricing.
-const PRICES = {
+// CAD is the original/primary pricing. USD is derived at a 0.75x rate.
+const PRICES_CAD = {
   photo_single: { amount: 5999, label: 'Single digital photo' },
   photo_full_set: { amount: 24999, label: 'Full digital photo gallery' },
   video_single: { amount: 7999, label: 'Single digital video' },
@@ -12,6 +13,16 @@ const PRICES = {
   print_20x30: { amount: 34999, label: '20×30 framed print' },
   print_24x36: { amount: 49999, label: '24×36 framed print' },
   print_30x40: { amount: 69999, label: '30×40 framed print' },
+};
+
+const PRICES_USD = {
+  photo_single: { amount: 4499, label: 'Single digital photo' },
+  photo_full_set: { amount: 18749, label: 'Full digital photo gallery' },
+  video_single: { amount: 5999, label: 'Single digital video' },
+  video_full_set: { amount: 29999, label: 'Full digital video collection' },
+  print_20x30: { amount: 26249, label: '20×30 framed print' },
+  print_24x36: { amount: 37499, label: '24×36 framed print' },
+  print_30x40: { amount: 52499, label: '30×40 framed print' },
 };
 
 export default async function handler(req, res) {
@@ -23,18 +34,25 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Cart is empty' });
   }
 
+  const galleryResult = await sql`SELECT id, currency FROM galleries WHERE slug = ${gallerySlug};`;
+  if (galleryResult.rows.length === 0) {
+    return res.status(404).json({ error: 'Gallery not found' });
+  }
+  const galleryId = galleryResult.rows[0].id;
+  // The gallery's currency is the source of truth — never trust a currency value
+  // submitted by the client, since that would let someone manipulate what they're charged.
+  // Defaults to CAD unless explicitly set to USD — CAD is the original/primary pricing
+  // that's been active all along, so any gallery without an explicit choice should keep
+  // using it rather than silently switching to the newer derived USD prices.
+  const currency = galleryResult.rows[0].currency === 'usd' ? 'usd' : 'cad';
+  const PRICES = currency === 'cad' ? PRICES_CAD : PRICES_USD;
+
   // Validate every cart line references a real product with at least one item attached
   for (const item of cart) {
     if (!PRICES[item.key] || !Array.isArray(item.mediaIds) || item.mediaIds.length === 0) {
       return res.status(400).json({ error: 'Invalid cart item' });
     }
   }
-
-  const galleryResult = await sql`SELECT id FROM galleries WHERE slug = ${gallerySlug};`;
-  if (galleryResult.rows.length === 0) {
-    return res.status(404).json({ error: 'Gallery not found' });
-  }
-  const galleryId = galleryResult.rows[0].id;
 
   const hasPrint = cart.some(item => item.key.startsWith('print_'));
   const hasDigital = cart.some(item => !item.key.startsWith('print_'));
@@ -53,7 +71,7 @@ export default async function handler(req, res) {
     const quantity = isPerItem ? item.mediaIds.length : 1;
     return {
       price_data: {
-        currency: 'usd',
+        currency,
         product_data: { name: isPerItem && quantity > 1 ? `${price.label} (×${quantity})` : price.label },
         unit_amount: price.amount,
         tax_behavior: 'exclusive',

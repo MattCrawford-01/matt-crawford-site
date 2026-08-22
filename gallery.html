@@ -147,22 +147,22 @@
   </div>
 
   <p class="tag section-label">Add To Cart</p>
-  <p style="font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:-14px; margin-bottom:24px;">All prices in USD</p>
+  <p style="font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:-14px; margin-bottom:24px;" id="currencyNotice">All prices in USD</p>
   <div class="add-cards">
 
     <div class="add-card locked" id="cardPhotos">
       <h3>Digital Photos</h3>
       <p class="hint">High-resolution files, delivered by email after checkout.</p>
-      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add selected photo(s) — $59.99 each ]</button>
-      <button class="price-btn" id="btnPhotoFullSet" onclick="addToCart('photo_full_set')">[ Add all photos — $249.99 ]</button>
+      <button class="price-btn" id="btnPhotoSingle" disabled onclick="addToCart('photo_single')">[ Add selected photo(s) ]</button>
+      <button class="price-btn" id="btnPhotoFullSet" onclick="addToCart('photo_full_set')">[ Add all photos ]</button>
       <p class="lock-msg" id="lockPhotos">Select one or more photos above to add them — the full set is always available.</p>
     </div>
 
     <div class="add-card locked" id="cardVideo">
       <h3>Digital Video</h3>
       <p class="hint">High-resolution files, delivered by email after checkout.</p>
-      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add selected video(s) — $79.99 each ]</button>
-      <button class="price-btn" id="btnVideoFullSet" onclick="addToCart('video_full_set')">[ Add all videos — $399.99 ]</button>
+      <button class="price-btn" id="btnVideoSingle" disabled onclick="addToCart('video_single')">[ Add selected video(s) ]</button>
+      <button class="price-btn" id="btnVideoFullSet" onclick="addToCart('video_full_set')">[ Add all videos ]</button>
       <p class="lock-msg" id="lockVideo">Select one or more videos above to add them — the full set is always available.</p>
     </div>
 
@@ -170,9 +170,9 @@
       <h3>Physical Print</h3>
       <p class="hint">Printed and shipped to your address. Photos only.</p>
       <select id="printSize">
-        <option value="print_20x30">20×30 framed — $349.99</option>
-        <option value="print_24x36">24×36 framed — $499.99</option>
-        <option value="print_30x40">30×40 framed — $699.99</option>
+        <option value="print_20x30" id="optPrint20x30">20×30 framed</option>
+        <option value="print_24x36" id="optPrint24x36">24×36 framed</option>
+        <option value="print_30x40" id="optPrint30x40">30×40 framed</option>
       </select>
       <button class="price-btn" id="btnPrint" disabled onclick="addToCart(document.getElementById('printSize').value)">[ Add print(s) ]</button>
       <p class="lock-msg" id="lockPrint">Select one or more photos above to add prints.</p>
@@ -184,7 +184,7 @@
     <p class="tag section-label">Your Cart</p>
     <div id="cartList"><p class="cart-empty">Your cart is empty — add photos, video, or prints above.</p></div>
     <div class="cart-total" id="cartTotal" style="display:none;">
-      <span>Total (USD, before tax)</span>
+      <span id="cartTotalLabel">Total (USD, before tax)</span>
       <strong id="cartTotalAmount">$0</strong>
     </div>
 
@@ -258,7 +258,8 @@
 
   // Mirrors the server-side price list — used only to display totals in the cart.
   // The server is the source of truth for what's actually charged.
-  const PRICES = {
+  // CAD is the original/primary pricing. USD is derived at a 0.75x rate.
+  const PRICES_CAD = {
     photo_single: { amount: 5999, label: 'Digital photo' },
     photo_full_set: { amount: 24999, label: 'Full digital photo set' },
     video_single: { amount: 7999, label: 'Digital video' },
@@ -267,6 +268,37 @@
     print_24x36: { amount: 49999, label: '24×36 framed print' },
     print_30x40: { amount: 69999, label: '30×40 framed print' },
   };
+
+  const PRICES_USD = {
+    photo_single: { amount: 4499, label: 'Digital photo' },
+    photo_full_set: { amount: 18749, label: 'Full digital photo set' },
+    video_single: { amount: 5999, label: 'Digital video' },
+    video_full_set: { amount: 29999, label: 'Full digital video set' },
+    print_20x30: { amount: 26249, label: '20×30 framed print' },
+    print_24x36: { amount: 37499, label: '24×36 framed print' },
+    print_30x40: { amount: 52499, label: '30×40 framed print' },
+  };
+
+  let currentCurrency = 'cad';
+  let PRICES = PRICES_CAD;
+
+  function formatPrice(amountCents) {
+    return `$${(amountCents / 100).toFixed(2)} ${currentCurrency.toUpperCase()}`;
+  }
+
+  // Applies the gallery's currency everywhere prices are shown — called once
+  // after the gallery loads, since currency is set per-gallery, not per-visit.
+  function applyCurrencyToUI() {
+    document.getElementById('currencyNotice').textContent = `All prices in ${currentCurrency.toUpperCase()}`;
+    document.getElementById('cartTotalLabel').textContent = `Total (${currentCurrency.toUpperCase()}, before tax)`;
+
+    document.getElementById('btnPhotoFullSet').textContent = `[ Add all photos — ${formatPrice(PRICES.photo_full_set.amount)} ]`;
+    document.getElementById('btnVideoFullSet').textContent = `[ Add all videos — ${formatPrice(PRICES.video_full_set.amount)} ]`;
+
+    document.getElementById('optPrint20x30').textContent = `20×30 framed — ${formatPrice(PRICES.print_20x30.amount)}`;
+    document.getElementById('optPrint24x36').textContent = `24×36 framed — ${formatPrice(PRICES.print_24x36.amount)}`;
+    document.getElementById('optPrint30x40').textContent = `30×40 framed — ${formatPrice(PRICES.print_30x40.amount)}`;
+  }
 
   async function loadGallery() {
     if (!slug) {
@@ -280,6 +312,10 @@
     }
     const data = await res.json();
     mediaData = data.media;
+    currentCurrency = data.currency === 'usd' ? 'usd' : 'cad';
+    PRICES = currentCurrency === 'cad' ? PRICES_CAD : PRICES_USD;
+    applyCurrencyToUI();
+
     document.getElementById('clientTitle').textContent =
       (data.clientBusiness || data.clientName) + ' — Photo Gallery';
 
@@ -337,8 +373,8 @@
     const photoSingleBtn = document.getElementById('btnPhotoSingle');
     photoSingleBtn.disabled = selectedPhotos.length === 0;
     photoSingleBtn.textContent = selectedPhotos.length > 1
-      ? `[ Add ${selectedPhotos.length} photos — $59.99 each ]`
-      : '[ Add selected photo — $59.99 ]';
+      ? `[ Add ${selectedPhotos.length} photos — ${formatPrice(PRICES.photo_single.amount)} each ]`
+      : `[ Add selected photo — ${formatPrice(PRICES.photo_single.amount)} ]`;
     document.getElementById('btnPhotoFullSet').disabled = !hasAnyPhoto;
     document.getElementById('lockPhotos').style.display = hasAnyPhoto ? 'none' : 'block';
 
@@ -347,8 +383,8 @@
     const videoSingleBtn = document.getElementById('btnVideoSingle');
     videoSingleBtn.disabled = selectedVideos.length === 0;
     videoSingleBtn.textContent = selectedVideos.length > 1
-      ? `[ Add ${selectedVideos.length} videos — $79.99 each ]`
-      : '[ Add selected video — $79.99 ]';
+      ? `[ Add ${selectedVideos.length} videos — ${formatPrice(PRICES.video_single.amount)} each ]`
+      : `[ Add selected video — ${formatPrice(PRICES.video_single.amount)} ]`;
     document.getElementById('btnVideoFullSet').disabled = !hasAnyVideo;
     document.getElementById('lockVideo').style.display = hasAnyVideo ? 'none' : 'block';
 
@@ -425,14 +461,14 @@
             <div class="cart-item-label">${price.label}<span class="meta">${metaText}</span></div>
           </div>
           <div class="cart-item-right">
-            <span class="cart-item-price">$${(lineTotal / 100).toFixed(2)}</span>
+            <span class="cart-item-price">${formatPrice(lineTotal)}</span>
             <button class="remove-btn" onclick="removeFromCart(${i})" aria-label="Remove">×</button>
           </div>
         </div>`;
     }).join('');
 
     totalEl.style.display = 'flex';
-    totalAmountEl.textContent = `$${(total / 100).toFixed(2)}`;
+    totalAmountEl.textContent = formatPrice(total);
     checkoutBtn.disabled = false;
 
     const hasPrint = cart.some(item => item.key.startsWith('print_'));

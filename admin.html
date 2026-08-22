@@ -19,7 +19,8 @@
   .tag{font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--grey);}
   .field{margin:20px 0;}
   label{display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin-bottom:8px;}
-  input, textarea{width:100%; background:transparent; border:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:14px; padding:12px;}
+  input, textarea, select{width:100%; background:transparent; border:1px solid var(--line-strong); color:var(--paper); font-family:var(--body); font-size:14px; padding:12px;}
+  select option{background:var(--ink-2);}
   .btn{font-family:var(--mono); font-size:12px; letter-spacing:0.1em; text-transform:uppercase; background:var(--paper); color:var(--ink); border:none; padding:14px 24px; cursor:pointer; margin-top:10px;}
   .btn:hover{opacity:0.85;}
   .btn:disabled{opacity:0.4; cursor:not-allowed;}
@@ -89,6 +90,13 @@
       <label>Client Email</label>
       <input type="email" id="clientEmail">
     </div>
+    <div class="field">
+      <label>Checkout Currency</label>
+      <select id="clientCurrency">
+        <option value="cad" selected>CAD — Canadian Dollars</option>
+        <option value="usd">USD — US Dollars</option>
+      </select>
+    </div>
     <button class="btn" onclick="createGallery()">[ Create Gallery ]</button>
     <p class="status" id="createStatus"></p>
 
@@ -147,6 +155,7 @@
     const clientName = document.getElementById('clientName').value;
     const clientBusiness = document.getElementById('clientBusiness').value;
     const clientEmail = document.getElementById('clientEmail').value;
+    const currency = document.getElementById('clientCurrency').value;
 
     if (!clientName || !clientEmail) {
       statusEl.textContent = 'Client name and email are required.';
@@ -158,7 +167,7 @@
     const res = await fetch('/api/admin-create-gallery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
-      body: JSON.stringify({ clientName, clientBusiness, clientEmail }),
+      body: JSON.stringify({ clientName, clientBusiness, clientEmail, currency }),
     });
 
     if (res.status === 401) {
@@ -326,7 +335,7 @@
     photo_full_set: 'Full digital photo set',
     video_single: 'Digital video',
     video_full_set: 'Full digital video set',
-    print_18x24: '18×24 framed print',
+    print_20x30: '20×30 framed print',
     print_24x36: '24×36 framed print',
     print_30x40: '30×40 framed print',
   };
