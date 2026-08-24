@@ -57,6 +57,12 @@
   .order-item-lines{font-family:var(--body); font-size:13px; color:var(--paper); margin-top:10px; line-height:1.7;}
   .order-item-ship{font-family:var(--mono); font-size:11px; color:var(--grey); margin-top:10px; line-height:1.6;}
   .fulfilled-badge{display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#7ac47a; margin-top:12px;}
+
+  .deliv-thumb{position:relative; width:70px; height:70px; cursor:pointer; border:2px solid transparent;}
+  .deliv-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .deliv-thumb.selected{border-color:var(--paper);}
+  .deliv-thumb .check{position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%; border:1px solid var(--paper); background:rgba(10,10,10,0.55); font-size:9px; display:flex; align-items:center; justify-content:center;}
+  .deliv-thumb.selected .check{background:var(--paper); color:var(--ink);}
 </style>
 </head>
 <body>
@@ -234,6 +240,7 @@
           <div class="gallery-item-meta">${g.client_name} · ${g.media_count} item${g.media_count == 1 ? '' : 's'} · created ${created}</div>
           <div class="gallery-item-link">${link}</div>
           <button class="btn-small" onclick="toggleDuplicateForm('${g.id}')">[ Duplicate to New Client ]</button>
+          <button class="btn-small" onclick="toggleDeliveryForm('${g.id}', '${g.slug}')">[ Send Direct Delivery ]</button>
           <button class="btn-small btn-danger" onclick="deleteGallery('${g.id}', ${JSON.stringify(g.client_business || g.client_name)})">[ Delete Gallery ]</button>
           <div class="duplicate-form" id="dupForm-${g.id}">
             <input type="text" placeholder="New client name" id="dupName-${g.id}">
@@ -241,6 +248,15 @@
             <input type="email" placeholder="New client email" id="dupEmail-${g.id}">
             <button class="btn-small" onclick="submitDuplicate('${g.id}')">[ Create Duplicate ]</button>
             <p class="status" id="dupStatus-${g.id}"></p>
+          </div>
+          <div class="duplicate-form" id="delivForm-${g.id}">
+            <p class="tag" style="margin-bottom:10px;">Select files to send</p>
+            <div class="thumbrow" id="delivThumbs-${g.id}"><span class="status">Loading files...</span></div>
+            <input type="email" placeholder="Client email" id="delivEmail-${g.id}" style="margin-top:14px;">
+            <label style="display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin:14px 0 8px;">Attach Your Invoice (Optional)</label>
+            <input type="file" accept="application/pdf" id="delivInvoice-${g.id}">
+            <button class="btn-small" onclick="submitDirectDelivery('${g.id}')" style="margin-top:14px;">[ Send Delivery Email ]</button>
+            <p class="status" id="delivStatus-${g.id}"></p>
           </div>
           <p class="status" id="delStatus-${g.id}"></p>
         </div>`;
@@ -285,6 +301,80 @@
     }
 
     loadGalleries();
+  }
+
+  const deliveryMediaByGallery = {};   // galleryId -> media array, fetched once per panel open
+  const deliverySelected = {};         // galleryId -> Set of selected media ids
+
+  async function toggleDeliveryForm(galleryId, gallerySlug) {
+    const panel = document.getElementById(`delivForm-${galleryId}`);
+    const wasActive = panel.classList.contains('active');
+    panel.classList.toggle('active');
+    if (wasActive || deliveryMediaByGallery[galleryId]) return; // already loaded, or just closing
+
+    const thumbsEl = document.getElementById(`delivThumbs-${galleryId}`);
+    const res = await fetch(`/api/gallery?slug=${gallerySlug}`);
+    const data = await res.json();
+    deliveryMediaByGallery[galleryId] = data.media;
+    deliverySelected[galleryId] = new Set();
+
+    if (data.media.length === 0) {
+      thumbsEl.innerHTML = '<span class="status">No files uploaded to this gallery yet.</span>';
+      return;
+    }
+
+    thumbsEl.innerHTML = data.media.map(m => `
+      <div class="deliv-thumb" id="delivThumb-${galleryId}-${m.id}" onclick="toggleDeliverySelect('${galleryId}', '${m.id}')">
+        <img src="/api/media-proxy?url=${encodeURIComponent(m.thumb_url)}" alt="${m.filename}">
+        <div class="check">✓</div>
+      </div>
+    `).join('');
+  }
+
+  function toggleDeliverySelect(galleryId, mediaId) {
+    const set = deliverySelected[galleryId];
+    const el = document.getElementById(`delivThumb-${galleryId}-${mediaId}`);
+    if (set.has(mediaId)) { set.delete(mediaId); el.classList.remove('selected'); }
+    else { set.add(mediaId); el.classList.add('selected'); }
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]); // strip the data: URL prefix
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function submitDirectDelivery(galleryId) {
+    const statusEl = document.getElementById(`delivStatus-${galleryId}`);
+    const mediaIds = [...(deliverySelected[galleryId] || [])];
+    const clientEmail = document.getElementById(`delivEmail-${galleryId}`).value;
+    const invoiceFile = document.getElementById(`delivInvoice-${galleryId}`).files[0];
+
+    if (mediaIds.length === 0) { statusEl.textContent = 'Select at least one file to send.'; return; }
+    if (!clientEmail) { statusEl.textContent = 'Client email is required.'; return; }
+
+    statusEl.textContent = 'Sending...';
+
+    let invoicePdfBase64 = null;
+    let invoicePdfFilename = null;
+    if (invoiceFile) {
+      invoicePdfBase64 = await readFileAsBase64(invoiceFile);
+      invoicePdfFilename = invoiceFile.name;
+    }
+
+    const res = await fetch('/api/admin-send-direct-delivery', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: JSON.stringify({ galleryId, mediaIds, clientEmail, invoicePdfBase64, invoicePdfFilename }),
+    });
+
+    if (res.status === 401) { statusEl.textContent = 'Wrong admin password.'; return; }
+    if (!res.ok) { statusEl.textContent = 'Something went wrong — please try again.'; return; }
+
+    statusEl.textContent = `Sent to ${clientEmail}.`;
   }
 
   function toggleDuplicateForm(galleryId) {
