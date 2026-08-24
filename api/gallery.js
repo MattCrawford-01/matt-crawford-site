@@ -4,22 +4,15 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const { slug } = req.query;
-  if (!slug) return res.status(400).json({ error: 'Missing gallery slug' });
+  if (!slug) return res.status(400).json({ error: 'Missing slug' });
 
   const galleryResult = await sql`
-    SELECT id, client_name, client_business, expires_at
-    FROM galleries WHERE slug = ${slug};
+    SELECT id, client_name, client_business, currency FROM galleries WHERE slug = ${slug};
   `;
-
   if (galleryResult.rows.length === 0) {
     return res.status(404).json({ error: 'Gallery not found' });
   }
-
   const gallery = galleryResult.rows[0];
-
-  if (gallery.expires_at && new Date(gallery.expires_at) < new Date()) {
-    return res.status(410).json({ error: 'This gallery link has expired' });
-  }
 
   const mediaResult = await sql`
     SELECT id, type, thumb_url, blob_url, filename, width_px, height_px FROM media
@@ -28,9 +21,9 @@ export default async function handler(req, res) {
   `;
 
   res.status(200).json({
-    galleryId: gallery.id,
     clientName: gallery.client_name,
     clientBusiness: gallery.client_business,
+    currency: gallery.currency || 'usd',
     media: mediaResult.rows,
   });
 }
